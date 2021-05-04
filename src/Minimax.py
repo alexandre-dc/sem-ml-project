@@ -1,17 +1,24 @@
-from small_sem import Board
-import small_sem
+from sem_game import Board
+import sem_game
 
 import numpy as np
 import time
 import pickle
 
-BOARD_ROWS = small_sem.BOARD_ROWS
-BOARD_COLS = small_sem.BOARD_COLS
-MAX_MOVES = small_sem.MAX_MOVES
+BOARD_ROWS = sem_game.BOARD_ROWS
+BOARD_COLS = sem_game.BOARD_COLS
+MAX_MOVES = sem_game.MAX_MOVES
 
 class Minimax:
-    def __init__(self):
-            pass
+    def __init__(self, _minimax_type, board, depth, alpha, beta, board_nextMoves, force_best_move = False):
+            self._minimax_type = _minimax_type
+            self.board = board
+            self.depth = depth
+            self.alpha = alpha
+            self.beta = beta
+            self.board_nextMoves = board_nextMoves
+            self.force_best_move = force_best_move
+
     def minimax_main_pruning_sym(self, board, depth, alpha, beta, player, board_nextMoves):       # Minimax with memory, 1 level breath searsh, alpha-beta pruning and symmetries
         if player == 1:
             best = [-1, -1, -10]
@@ -53,7 +60,8 @@ class Minimax:
                     break
             else:
                 score = self.minimax_main_pruning_sym(board, depth - 1, alpha, beta, -player, board_nextMoves)
-                score[2] *= 0.9
+                if self.force_best_move:
+                    score[2] *= 0.9
             board.undo_move((x, y))
             score[0], score[1] = x, y
 
@@ -81,7 +89,7 @@ class Minimax:
 
 
             # Minimax with memory, 1 level breath searsh and alpha-beta pruning
-    def minimax_main_pruning(self, board, depth, alpha, beta, player, board_nextMoves):       
+    def minimax_main_pruning(self, board, depth, alpha, beta, player, board_nextMoves, force_best_move = False):       
         if player == 1:
             best = [-1, -1, -10]
             value = -100
@@ -116,7 +124,8 @@ class Minimax:
             board.make_move((x, y))
             if board_nextMoves.get(board.getHash()) == None:
                 score = self.minimax_main_pruning(board, depth - 1, alpha, beta, -player, board_nextMoves)
-                #score[2] *= 0.9
+                if self.force_best_move:
+                    score[2] *= 0.9
             else:
                 score = board_nextMoves.get(board.getHash())
             board.undo_move((x, y))
@@ -178,7 +187,8 @@ class Minimax:
             board.make_move((x, y))
             if board_nextMoves.get(board.getHash()) == None:
                 score = self.minimax_main(board, depth - 1, -player, board_nextMoves)
-                #score[2] *= 0.9
+                if self.force_best_move:
+                    score[2] *= 0.9
             else:
                 score = board_nextMoves.get(board.getHash())
             board.undo_move((x, y))
@@ -222,7 +232,8 @@ class Minimax:
             board.make_move((x, y))
             #state.board[x, y] += 1
             score = self.minimax_simple_pruning(board, depth - 1, alpha, beta, -player)
-            #score[2] *= 0.9
+            if self.force_best_move:
+                score[2] *= 0.9
             #print(score)
             #state.board[x, y] -= 1
             board.undo_move((x, y))
@@ -263,7 +274,8 @@ class Minimax:
             board.make_move((x, y))
             #state.board[x, y] += 1
             score = self.minimax_simple(board, depth - 1, -player)
-            #score[2] *= 0.9
+            if self.force_best_move:
+                score[2] *= 0.9
             #print(score)
             #state.board[x, y] -= 1
             board.undo_move((x, y))
@@ -277,6 +289,20 @@ class Minimax:
                     best = score  # min value
 
         return best
+
+    def run_search (self, player):
+        if self._minimax_type == "MMPS":
+            return self.minimax_main_pruning_sym(self.board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
+        elif self._minimax_type == "MMP":
+            return self.minimax_main_pruning(self.board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
+        elif self._minimax_type == "MM":
+            return self.minimax_main(self.board, self.depth, player, self.board_nextMoves)
+        elif self._minimax_type == "MSP":
+            return self.minimax_simple(self.board, self.depth, self.alpha, self.beta, player)
+        elif self._minimax_type == "MS":
+            return self.minimax_main_pruning(self.board, self.depth, player)
+        else:
+            return 0
 
 # board = Board()
 # done = False

@@ -1,11 +1,11 @@
 import tkinter as tk
 
-from small_sem import Board, Player
-import small_sem
+from sem_game import Board, Player
+import sem_game
 
-BOARD_ROWS = small_sem.BOARD_ROWS
-BOARD_COLS = small_sem.BOARD_COLS
-MAX_MOVES = small_sem.MAX_MOVES
+BOARD_ROWS = sem_game.BOARD_ROWS
+BOARD_COLS = sem_game.BOARD_COLS
+MAX_MOVES = sem_game.MAX_MOVES
 
 class VisualGame(tk.Frame):
     def __init__(self, parent):

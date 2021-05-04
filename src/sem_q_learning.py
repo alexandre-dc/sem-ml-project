@@ -1,11 +1,11 @@
-import small_sem
-from small_sem import Board, Game, Player, Agent
+import sem_game
+from sem_game import Board, Game, Player, Agent
 
 import numpy as np
 
-BOARD_ROWS = small_sem.BOARD_ROWS
-BOARD_COLS = small_sem.BOARD_COLS
-MAX_MOVES = small_sem.MAX_MOVES
+BOARD_ROWS = sem_game.BOARD_ROWS
+BOARD_COLS = sem_game.BOARD_COLS
+MAX_MOVES = sem_game.MAX_MOVES
 
 class Q_learning:
     def __init__(self, agent, adv):

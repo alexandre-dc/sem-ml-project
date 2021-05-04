@@ -1,22 +1,18 @@
-from small_sem import Board
+from sem_game import Board
 from Minimax import Minimax
 
 import pickle
 import time
 
 board = Board()
-minimax = Minimax()
-done = False
-board_next_move = {}
+board_nextMoves = {}
+minimax = Minimax("MM", board, 35, -100, 100, board_nextMoves, force_best_move=True)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
+done = False                                                                                # Main_Prunning_Symmetric   /   Main_Prunning   /   Main    /   Simple_Prunning    /    Simple
 
 t0 = time.clock()
 while not done:
     if board.turn == 1:
-        # minimax_move = minimax.minimax_simple(board, 35, 1)
-        # minimax_move = minimax.minimax_simple_pruning(board, 35, -100, 100, 1)
-        # minimax_move = minimax.minimax_main(board, 35, 1, board_next_move)
-        # minimax_move = minimax.minimax_main_pruning(board, 35, -100, 100, 1, board_next_move)
-        minimax_move = minimax.minimax_main_pruning_sym(board, 35, -100, 100, 1, board_next_move)
+        minimax_move = minimax.run_search(1)
         move = (minimax_move[0], minimax_move[1])
         board.make_move(move) 
 
@@ -24,11 +20,7 @@ while not done:
             done = True
             print("Win 1")
     else:
-        # minimax_move = minimax.minimax_simple(board, 35, -1)
-        # minimax_move = minimax.minimax_simple_pruning(board, 35, -100, 100, -1)
-        # minimax_move = minimax.minimax_main(board, 35, -1, board_next_move)
-        # minimax_move = minimax.minimax_main_pruning(board, 35, -100, 100, -1, board_next_move)
-        minimax_move = minimax.minimax_main_pruning_sym(board, 35, -100, 100, -1, board_next_move)
+        minimax_move = minimax.run_search(-1)
         move = (minimax_move[0], minimax_move[1])
         board.make_move(move) 
 
@@ -43,7 +35,7 @@ while not done:
 t1 = time.clock() - t0
 print(t1)
 
-fw = open('board_next_move' + str(''), 'wb')
-pickle.dump(board_next_move, fw)
+fw = open('/home/alexandre/sem-project-logs/board_nextMoves' + str(''), 'wb')
+pickle.dump(board_nextMoves, fw)
 fw.close()
 

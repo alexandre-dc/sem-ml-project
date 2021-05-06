@@ -10,9 +10,9 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 class Minimax:
-    def __init__(self, _minimax_type, board, depth, alpha, beta, board_nextMoves, force_best_move = False):
+    def __init__(self, _minimax_type, depth, alpha, beta, board_nextMoves, force_best_move = False):
             self._minimax_type = _minimax_type
-            self.board = board
+            #self.board = board
             self.depth = depth
             self.alpha = alpha
             self.beta = beta
@@ -290,9 +290,9 @@ class Minimax:
 
         return best
 
-    def run_search (self, player):
+    def run_search (self, board, player):
         if self._minimax_type == "MMPS":
-            return self.minimax_main_pruning_sym(self.board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
+            return self.minimax_main_pruning_sym(board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
         elif self._minimax_type == "MMP":
             return self.minimax_main_pruning(self.board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
         elif self._minimax_type == "MM":

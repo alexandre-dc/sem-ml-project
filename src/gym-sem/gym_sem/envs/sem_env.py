@@ -5,12 +5,12 @@ from gym.utils import seeding
 
 import numpy as np
 
-import small_sem
-from small_sem import Board, Player
+import sem_game
+from sem_game import Board, Player
 
-BOARD_ROWS = small_sem.BOARD_ROWS
-BOARD_COLS = small_sem.BOARD_COLS
-MAX_MOVES = small_sem.MAX_MOVES
+BOARD_ROWS = sem_game.BOARD_ROWS
+BOARD_COLS = sem_game.BOARD_COLS
+MAX_MOVES = sem_game.MAX_MOVES
 
 class SemEnv(gym.Env):
     metadata = {'render.modes': ['human']}

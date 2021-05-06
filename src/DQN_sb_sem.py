@@ -1,4 +1,7 @@
 import gym 
+# from gym import envs
+# for env in envs.registry.all():
+#     print(env)
 import gym_sem
 
 import tensorflow as tf
@@ -24,8 +27,8 @@ class CustomDQNPolicy(FeedForwardPolicy):
 
 env = make_vec_env('sem-v0', n_envs=1)
 model = DQN(CustomDQNPolicy, env, verbose=1)
-model.learn(total_timesteps=10000)
-model.save("010k_test_sem1_3x2_dqn_32")
+model.learn(total_timesteps=100000)
+model.save("/home/alexandre/sem-project-logs/0100k_test_sem1_3x4_dqn_32")
 mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10000)
 print(f"mean_reward:{mean_reward:.5f} +/- {std_reward:.5f}")
 

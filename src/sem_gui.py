@@ -1,7 +1,8 @@
 import tkinter as tk
 
-from sem_game import Board, Player
+from sem_game import Board
 import sem_game
+from Player import Player
 
 BOARD_ROWS = sem_game.BOARD_ROWS
 BOARD_COLS = sem_game.BOARD_COLS
@@ -10,8 +11,8 @@ MAX_MOVES = sem_game.MAX_MOVES
 class VisualGame(tk.Frame):
     def __init__(self, parent):
         self.board = Board()
-        # self.p2 = Player(_name="0100k_test_sem1_3x4_dqn_32", _player_type="DQN")    # DQN
-        self.p2 = Player(_name="", _player_type="Minimax")
+        self.p2 = Player(_name="/home/alexandre/sem-project-logs/0100k_test_sem1_3x4_dqn_32", _player_type="DQN")    # DQN
+        #self.p2 = Player(_name="board_nextMoves", _player_type="Minimax")
         #print(self.p2.agent.states_value)
         #print(sorted(self.p2.agent.states_value))
         #print(len(self.p2.agent.states_value))
@@ -35,7 +36,9 @@ class VisualGame(tk.Frame):
         self.reset_b = tk.Button(text="Reset", command=self.reset)
         self.reset_b.pack(side = "bottom")
 
-        #self.bot_move()
+        self.bot_turn = -1
+        if self.bot_turn == 1:
+            self.bot_move()
 
 
     def makeMove(self, event):
@@ -57,7 +60,7 @@ class VisualGame(tk.Frame):
 
     def bot_move(self):
         positions = self.board.availablePositions()
-        action = self.p2.choose_action(positions, self.board)
+        action = self.p2.choose_action(positions, self.board, player = self.bot_turn)
         print(action)
         moveMade = self.board.make_move(action)
         print(moveMade)
@@ -82,7 +85,8 @@ class VisualGame(tk.Frame):
         self.board.reset()
         self.canvas.delete("move")
 
-        #self.bot_move()
+        if self.bot_turn == 1:
+            self.bot_move()
 
                 
 if __name__ == "__main__":

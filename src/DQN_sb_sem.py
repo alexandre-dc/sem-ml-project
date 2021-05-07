@@ -23,13 +23,15 @@ class CustomDQNPolicy(FeedForwardPolicy):
                                            layer_norm=False,
                                            feature_extraction="mlp")
 
-
-
+train_steps = 100000
+test_steps = 10000
+save_file = str(int(train_steps/1000)) + "k_mm_sem3_3x4_dqn_32"
 env = make_vec_env('sem-v0', n_envs=1)
+#model = DQN.load("/home/alexandre/sem-project-logs/" + save_file, env)
 model = DQN(CustomDQNPolicy, env, verbose=1)
-model.learn(total_timesteps=100000)
-model.save("/home/alexandre/sem-project-logs/0100k_test_sem1_3x4_dqn_32")
-mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10000)
+model.learn(total_timesteps=train_steps)
+model.save("/home/alexandre/sem-project-logs/" + save_file)
+mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=test_steps)
 print(f"mean_reward:{mean_reward:.5f} +/- {std_reward:.5f}")
 
 # t = []

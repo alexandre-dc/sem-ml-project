@@ -1,12 +1,12 @@
 from sem_game import Board
-#from Minimax import Minimax
+from Minimax import Minimax
 
 import pickle
 import time
 
 board = Board()
 board_nextMoves = {}
-minimax = Minimax("MMPS", 35, -100, 100, board_nextMoves, force_best_move=True)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
+minimax = Minimax("MMPS", 35, -100, 100, board_nextMoves, force_best_move=False)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
 done = False                                                                                # Main_Prunning_Symmetric   /   Main_Prunning   /   Main    /   Simple_Prunning    /    Simple
 
 t0 = time.clock()

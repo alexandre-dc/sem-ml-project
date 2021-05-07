@@ -3,6 +3,7 @@ import sem_game
 from Minimax import Minimax
 from stable_baselines import DQN
 
+import numpy as np
 import pickle
 
 BOARD_ROWS = sem_game.BOARD_ROWS

@@ -11,7 +11,7 @@ MAX_MOVES = sem_game.MAX_MOVES
 class VisualGame(tk.Frame):
     def __init__(self, parent):
         self.board = Board()
-        self.p2 = Player(_name="/home/alexandre/sem-project-logs/0100k_test_sem1_3x4_dqn_32", _player_type="DQN")    # DQN
+        self.p2 = Player(_name="/home/alexandre/sem-project-logs/100k_mm_sem3_3x4_dqn_32", _player_type="DQN")    # DQN
         #self.p2 = Player(_name="board_nextMoves", _player_type="Minimax")
         #print(self.p2.agent.states_value)
         #print(sorted(self.p2.agent.states_value))

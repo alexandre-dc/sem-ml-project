@@ -11,7 +11,7 @@ import operator
 
 BOARD_ROWS = 3
 BOARD_COLS = 4
-MAX_MOVES = 1
+MAX_MOVES = 3
 
 class Board:                                
     def __init__(self):                     # Inicialização do board

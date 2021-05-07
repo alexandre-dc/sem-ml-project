@@ -6,7 +6,8 @@ from gym.utils import seeding
 import numpy as np
 
 import sem_game
-from sem_game import Board, Player
+from sem_game import Board
+from Player import Player
 
 BOARD_ROWS = sem_game.BOARD_ROWS
 BOARD_COLS = sem_game.BOARD_COLS
@@ -19,7 +20,9 @@ class SemEnv(gym.Env):
         self.action_space = spaces.Discrete(BOARD_ROWS * BOARD_COLS)
         self.observation_space = spaces.Box(low=0, high=1, shape=(BOARD_ROWS, BOARD_COLS, MAX_MOVES), dtype=np.uint8)
 
-        self.rand_bot = Player()
+        self.rand_bot = Player(_name="board_nextMoves", _player_type="Minimax")
+        self.rand = Player()
+        self.agent_turn = -1
 
         self.board = Board()
         self.done = False
@@ -79,9 +82,14 @@ class SemEnv(gym.Env):
             return self.board.get_one_hot(), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
-        positions = self.board.availablePositions()
-        botMove = self.rand_bot.choose_action(positions)
-        moveDone = self.board.make_move((botMove[0], botMove[1]))
+        if np.random.rand() < 0.2:
+            positions = self.board.availablePositions()
+            botMove = self.rand_bot.choose_action(positions, self.board, player = -self.agent_turn)
+            moveDone = self.board.make_move((botMove[0], botMove[1]))
+        else:
+            positions = self.board.availablePositions()
+            botMove = self.rand.choose_action(positions, self.board, player = -self.agent_turn)
+            moveDone = self.board.make_move((botMove[0], botMove[1]))
 
         win = self.board.check_win()
         if win != -1:
@@ -99,9 +107,16 @@ class SemEnv(gym.Env):
         self.board.reset()
         self.done = False
 
-        positions = self.board.availablePositions()
-        botMove = self.rand_bot.choose_action(positions)
-        moveDone = self.board.make_move((botMove[0], botMove[1]))
+        if self.agent_turn == -1:
+            positions = self.board.availablePositions()
+            botMove = self.rand.choose_action(positions, self.board, player = -self.agent_turn)
+            moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+        # if np.random.choice(range(2)) == 1:
+        # if self.agent_turn == -1:
+        #     positions = self.board.availablePositions()
+        #     botMove = self.rand_bot.choose_action(positions, self.board, player = -self.agent_turn)
+        #     moveDone = self.board.make_move((botMove[0], botMove[1]))
 
         # hash_state = self.board.getHash()
         # canonic_state = self.get_canonic_state(hash_state)

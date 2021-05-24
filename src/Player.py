@@ -1,6 +1,7 @@
 #from sem_game import 
 import sem_game
 from Minimax import Minimax
+from Agent import Agent
 from stable_baselines import DQN
 
 import numpy as np
@@ -18,19 +19,22 @@ class Player:
         self._player_type = _player_type    # Random / Human / DQN
         self.model = None
         if self._player_type == "DQN":
-            self.model = DQN.load(_name)
+            self.model = DQN.load("/home/alexandre/sem-project-logs/dqn/" + self._name)
         if self._player_type == "Minimax":
-            fr = open("/home/alexandre/sem-project-logs/" + self._name, 'rb')
+            fr = open("/home/alexandre/sem-project-logs/minimax/" + self._name, 'rb')
             self.model = pickle.load(fr)
             self.minimax = Minimax("MMPS", 35, -100, 100, self.model, force_best_move=True)
             fr.close()
-        if self._player_type == "Q_learning":
-            fr = open("policy_q_learning", 'rb')
+        if self._player_type == "Q-learning":
+            fr = open("/home/alexandre/sem-project-logs/q_learning/" + self._name, 'rb')
+            print(self._name)
             self.agent = Agent()
             self.agent.states_value = pickle.load(fr)
+            print(self.agent.states_value)
             fr.close()
 
-    def choose_action(self, positions, board = None, player = 1):  # Corrigir depois
+    def choose_action(self, board = None, player = 1):  # Corrigir depois
+        positions = board.availablePositions()
         if self._player_type == "Human":
             while True:
                 row = input("Input your action row:")
@@ -52,7 +56,7 @@ class Player:
             minimax_move = self.minimax.run_search(board, player)
             action = (minimax_move[0], minimax_move[1])
         elif self._player_type == "Q_learning":
-            action, _states = self.agent.choose_action(positions, board)
+            action, _states = self.agent.choose_action(board)
             action = (int(action / BOARD_COLS), int(action % BOARD_COLS))
         elif self._player_type == "Monte_Carlo":
             minimax_move = Minimax.minimax_main_pruning_sym(board, 35, -100, 100, 1, self.model)

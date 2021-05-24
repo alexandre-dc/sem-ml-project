@@ -9,9 +9,11 @@ import time
 import copy
 import operator
 
+from Agent import Agent
+
 BOARD_ROWS = 3
-BOARD_COLS = 4
-MAX_MOVES = 3
+BOARD_COLS = 2
+MAX_MOVES = 1
 
 class Board:                                
     def __init__(self):                     # Inicialização do board
@@ -72,35 +74,54 @@ class Board:
                         break
 
         if padded:
-            one_hot_board = np.pad(one_hot_board, ((0, 0), (31, 30), (30, 30)),mode='constant', constant_values=(0))
-
+            half_cols = int(BOARD_COLS / 2)
+            one_hot_board = np.pad(one_hot_board, ((31, 30), (30, 30), (0, 0)),mode='constant', constant_values=(0))
+            one_hot_board = one_hot_board.reshape(-1, 64, 64, MAX_MOVES)
         return one_hot_board
 
-    def check_win (self):               # Verifica se existe um vencedor - return (-1) se não existir, outro numero se existir
+    def check_win (self, return_line=False):               # Verifica se existe um vencedor - return (-1) se não existir, outro numero se existir
         if BOARD_ROWS >= 3:
             for j in range(BOARD_COLS):
                 for lim in range(BOARD_ROWS - 2):
                     if self.state[lim,j] != 0:
                         if self.state[lim,j] == self.state[lim + 1,j] and self.state[lim,j] == self.state[lim + 2,j]:
-                            return self.state[lim,j]
+                            if return_line:
+                                win_line = [(lim,j), (lim + 1,j), (lim + 2,j)]
+                                return self.state[lim,j], win_line
+                            else:
+                                return self.state[lim,j]
         
         if BOARD_COLS >= 3:
             for i in range(BOARD_ROWS):
                 for lim in range(BOARD_COLS - 2):
                     if self.state[i,lim] != 0:
                         if self.state[i,lim] == self.state[i,lim + 1] and self.state[i,lim] == self.state[i,lim + 2]:
-                            return self.state[i,lim]
+                            if return_line:
+                                win_line = [(i,lim), (i,lim + 1), (i,lim + 2)]
+                                return self.state[i,lim], win_line
+                            else:
+                                return self.state[i,lim]
 
         if BOARD_ROWS >= 3 and BOARD_COLS >= 3:
             for lim_cols in range(BOARD_COLS - 2):
                 for lim_rows in range(BOARD_ROWS - 2):
                     if self.state[lim_rows + 1,lim_cols + 1] != 0:
                         if self.state[lim_rows,lim_cols] == self.state[lim_rows + 1,lim_cols + 1] and self.state[lim_rows,lim_cols] == self.state[lim_rows + 2,lim_cols + 2]:
-                            return self.state[lim_rows + 1,lim_cols + 1]
+                            if return_line:
+                                win_line = [(lim_rows,lim_cols), (lim_rows + 1,lim_cols + 1), (lim_rows + 2,lim_cols + 2)]
+                                return self.state[lim_rows + 1,lim_cols + 1], win_line
+                            else:
+                                return self.state[lim_rows + 1,lim_cols + 1]
                         if self.state[lim_rows,lim_cols + 2] == self.state[lim_rows + 1,lim_cols + 1] and self.state[lim_rows,lim_cols + 2] == self.state[lim_rows + 2,lim_cols]:
-                            return self.state[lim_rows + 1,lim_cols + 1]
-
-        return -1
+                            if return_line:
+                                win_line = [(lim_rows,lim_cols + 2), (lim_rows + 1,lim_cols + 1), (lim_rows + 2,lim_cols)]
+                                return self.state[lim_rows + 1,lim_cols + 1], win_line
+                            else:
+                                return self.state[lim_rows + 1,lim_cols + 1]
+        if return_line:
+            return -1, [((-1, -1), (-1, -1), (-1, -1))]
+        else:
+            return -1
 
     def availablePositions(self):       # Devolve uma lista de tuples com todas as positions onde é possivel jogar
         positions = []
@@ -254,7 +275,7 @@ class Game:
             positions = self.board.all_positions
             all_positions = self.board.all_positions
             if self.board.turn == 1:    # Player 1 play
-                action = self.p1.choose_action(positions, self.board)
+                action = self.p1.choose_action(self.board)
                 moveMade = self.board.make_move(action)
 
                 if moveMade == 0:   # Check in move tried was valid
@@ -263,24 +284,19 @@ class Game:
                 if self.board.check_win() != -1:    # Check win
                     #print("wins p1!")
                     self.done = True
-                    self.board.showBoard()
+                    #self.board.showBoard()
                     return -1
 
-                if type(self.p1) == type(Agent()):
-                    self.p1.addMove(action)
-                else:
-                    self.p2.addState(self.board.getHash())
+                if type(self.p2) != type(Agent()):
+                    self.p1.addState(self.board.getHash())
 
             else:                       # Player 2 play
                 #print("...............")
                 #self.board.showBoard()
-                action = self.p2.choose_action(positions, self.board)
+                action = self.p2.choose_action(self.board)
                 moveMade = self.board.make_move(action)
 
-                if type(self.p2) == type(Agent()):
-                    self.p2.addMove(action)
-                else:
-                    self.p1.addState(self.board.getHash())
+                self.p2.addState(self.board.getHash())
 
                 if moveMade == 0:   # Check in move tried was valid
                     return -1
@@ -303,190 +319,190 @@ class Game:
         self.done = False
     
 
-class Agent:
-    def __init__(self, name="___", epsilon=0.8, epsilon_rate=0.2, epsilon_min=0.02, lr=0.001, gamma=0.99, model = None):
-        self.name = name
-        self.states = []  # record all positions taken
-        self.moves = []
-        self.lr = lr
-        self.epsilon = epsilon
-        self.epsilon_drop_rate = 0
-        self.epsilon_rate = epsilon_rate
-        self.epsilon_min = epsilon_min
-        self.gamma = gamma
-        self.states_value = {}  # q-value for each explored state
-        self.all_rewards = []
-        self.all_rewards_means = []
-        self.epsilon_drop_rate = 0
+# class Agent:
+#     def __init__(self, name="___", epsilon=0.8, epsilon_rate=0.2, epsilon_min=0.02, lr=0.001, gamma=0.99, model = None):
+#         self.name = name
+#         self.states = []  # record all positions taken
+#         self.moves = []
+#         self.lr = lr
+#         self.epsilon = epsilon
+#         self.epsilon_drop_rate = 0
+#         self.epsilon_rate = epsilon_rate
+#         self.epsilon_min = epsilon_min
+#         self.gamma = gamma
+#         self.states_value = {}  # q-value for each explored state
+#         self.all_rewards = []
+#         self.all_rewards_means = []
+#         self.epsilon_drop_rate = 0
 
-        self.test_mode = False
-        self.model = model
+#         self.test_mode = False
+#         self.model = model
 
-    def set_test_mode (self, test_mode):
-        self.test_mode = test_mode
+#     def set_test_mode (self, test_mode):
+#         self.test_mode = test_mode
 
-    def choose_action(self, positions, current_board):
-        #print(self.test_mode)
-        if self.test_mode:                                  # Choose action while being tested
-            #print(current_board.all_positions)
-            action = self.predict(current_board.all_positions,current_board)
-        else:                                               # Choose action while being trained
-            if np.random.uniform(0, 1) <= self.epsilon:         # Random action
-                idx = np.random.choice(len(current_board.all_positions))
-                action = current_board.all_positions[idx]
-            else:                                               # Greedy action
-                action = self.predict(current_board.all_positions,current_board)
+#     def choose_action(self, positions, current_board):
+#         #print(self.test_mode)
+#         if self.test_mode:                                  # Choose action while being tested
+#             #print(current_board.all_positions)
+#             action = self.predict(current_board.all_positions,current_board)
+#         else:                                               # Choose action while being trained
+#             if np.random.uniform(0, 1) <= self.epsilon:         # Random action
+#                 idx = np.random.choice(len(current_board.all_positions))
+#                 action = current_board.all_positions[idx]
+#             else:                                               # Greedy action
+#                 action = self.predict(current_board.all_positions,current_board)
 
-        return action
+#         return action
 
-    def predict(self, positions, current_board):
-        possible_state_values = 0
-        board_hash = current_board.getHash()
-        state_moves_values = self.states_value.get(board_hash)
-        #state_moves_values = (None if self.states_value.get(board_hash) is None else self.states_value.get(current_board.getHash()))
-        #print("........")
-        #current_board.showBoard()
-        #print(state_moves_values)
-        if type(state_moves_values) == type(None):
-            idx = np.random.choice(len(positions))
-        else:
-            #print("here")
-            state_moves_values_list = []
-            for p in positions:
-                state_moves_values_list.append(state_moves_values[p])
-            #print(state_moves_values_list)
-            idx, value = max(enumerate(state_moves_values_list), key=operator.itemgetter(1))
+#     def predict(self, positions, current_board):
+#         possible_state_values = 0
+#         board_hash = current_board.getHash()
+#         state_moves_values = self.states_value.get(board_hash)
+#         #state_moves_values = (None if self.states_value.get(board_hash) is None else self.states_value.get(current_board.getHash()))
+#         #print("........")
+#         #current_board.showBoard()
+#         #print(state_moves_values)
+#         if type(state_moves_values) == type(None):
+#             idx = np.random.choice(len(positions))
+#         else:
+#             #print("here")
+#             state_moves_values_list = []
+#             for p in positions:
+#                 state_moves_values_list.append(state_moves_values[p])
+#             #print(state_moves_values_list)
+#             idx, value = max(enumerate(state_moves_values_list), key=operator.itemgetter(1))
 
-        return positions[idx]
+#         return positions[idx]
 
-    def q_values(self, positions, current_board):
-        possible_state_values = []
+#     def q_values(self, positions, current_board):
+#         possible_state_values = []
         
-        for p in positions:
-            next_board = current_board.copy()
-            current_board.make_move(p)
-            next_boardHash = current_board.getHash()
-            possible_state_values.append(0 if self.states_value.get(next_boardHash) is None else self.states_value.get(next_boardHash))
-            current_board.undo_move(p)
+#         for p in positions:
+#             next_board = current_board.copy()
+#             current_board.make_move(p)
+#             next_boardHash = current_board.getHash()
+#             possible_state_values.append(0 if self.states_value.get(next_boardHash) is None else self.states_value.get(next_boardHash))
+#             current_board.undo_move(p)
 
-        return possible_state_values
+#         return possible_state_values
 
-    def print_heatmap(self, state):
-        state.showBoard()
-        q_heatmap = self.q_values(state.all_positions, state.board)
-        print(q_heatmap)
-        a = np.zeros((BOARD_ROWS, BOARD_COLS))
-        for i in range(len(q_heatmap)):
-            if q_heatmap[i] == 0:
-                continue
-            a[int(i/BOARD_COLS), i%BOARD_COLS] = q_heatmap[i][2]
+#     def print_heatmap(self, state):
+#         state.showBoard()
+#         q_heatmap = self.q_values(state.all_positions, state.board)
+#         print(q_heatmap)
+#         a = np.zeros((BOARD_ROWS, BOARD_COLS))
+#         for i in range(len(q_heatmap)):
+#             if q_heatmap[i] == 0:
+#                 continue
+#             a[int(i/BOARD_COLS), i%BOARD_COLS] = q_heatmap[i][2]
 
-        #print (state.showBoard())
-        print(a)
+#         #print (state.showBoard())
+#         print(a)
         
-        plt.imshow(a, cmap='gist_heat', interpolation='nearest')
-        plt.clim(-1, 1)
-        plt.show()
+#         plt.imshow(a, cmap='gist_heat', interpolation='nearest')
+#         plt.clim(-1, 1)
+#         plt.show()
 
-    def perfectMove(self, state):
-        best_move = self.states_value.get(state.getHash())
-        return (best_move[0], best_move[1])
+#     def perfectMove(self, state):
+#         best_move = self.states_value.get(state.getHash())
+#         return (best_move[0], best_move[1])
 
-    # append a hash state
-    def addState(self, state):
-        self.states.append(state)
+#     # append a hash state
+#     def addState(self, state):
+#         self.states.append(state)
 
-    def addMove(self, move):
-        #print("here")
-        self.moves.append(move)
-        #print(len(self.moves))
+#     def addMove(self, move):
+#         #print("here")
+#         self.moves.append(move)
+#         #print(len(self.moves))
 
-    # at the end of game, backpropagate and update states value
-    def feedReward(self, reward):
-        self.all_rewards.append(reward)
-        count = len(self.states) - 1
-        #print(len(self.moves))
-        #print(len(self.states))
-        for st in reversed(self.states):
-            if self.states_value.get(st) is None:
-                self.states_value[st] = np.zeros((3, 2))
-            #print(type(st))
-            #print(self.moves[count])
-            self.states_value[st][self.moves[count]] += self.lr * (self.gamma * reward - self.states_value[st][self.moves[count]])
-            reward = np.max(self.states_value[st])
-            #reward = max(self.states_value[st].iteritems(), key=operator.itemgetter(1))[0]
-            count -= 1
+#     # at the end of game, backpropagate and update states value
+#     def feedReward(self, reward):
+#         self.all_rewards.append(reward)
+#         count = len(self.states) - 1
+#         #print(len(self.moves))
+#         #print(len(self.states))
+#         for st in reversed(self.states):
+#             if self.states_value.get(st) is None:
+#                 self.states_value[st] = np.zeros((3, 2))
+#             #print(type(st))
+#             #print(self.moves[count])
+#             self.states_value[st][self.moves[count]] += self.lr * (self.gamma * reward - self.states_value[st][self.moves[count]])
+#             reward = np.max(self.states_value[st])
+#             #reward = max(self.states_value[st].iteritems(), key=operator.itemgetter(1))[0]
+#             count -= 1
 
-    def reset(self):
-        self.states = []
-        self.moves = []
+#     def reset(self):
+#         self.states = []
+#         self.moves = []
 
-    def rand_stateValues(self, all_states):
-        for st in all_states:
-            self.states_value[st] = random()
+#     def rand_stateValues(self, all_states):
+#         for st in all_states:
+#             self.states_value[st] = random()
 
-    def savePolicy(self, name=''):
-        if name == '':
-            name = self.name
+#     def savePolicy(self, name=''):
+#         if name == '':
+#             name = self.name
 
-        fw = open('policy_' + str(name), 'wb')
-        pickle.dump(self.states_value, fw)
-        fw.close()
+#         fw = open('policy_' + str(name), 'wb')
+#         pickle.dump(self.states_value, fw)
+#         fw.close()
 
-    def loadPolicy(self, file):
-        fr = open(file, 'rb')
-        self.states_value = pickle.load(fr)
-        fr.close()
+#     def loadPolicy(self, file):
+#         fr = open(file, 'rb')
+#         self.states_value = pickle.load(fr)
+#         fr.close()
 
-class Player:
-    def __init__(self, _name="___", _player_type = "Random"):
-        self._name = _name
-        self._player_type = _player_type    # Random / Human / DQN
-        self.model = None
-        if self._player_type == "DQN":
-            self.model = DQN.load(_name)
-        if self._player_type == "Minimax":
-            fr = open("/home/alexandre/sem-project-logs/" + self._name, 'rb')
-            self.model = pickle.load(fr)
-            fr.close()
-        if self._player_type == "Q_learning":
-            fr = open("policy_q_learning", 'rb')
-            self.agent = Agent()
-            self.agent.states_value = pickle.load(fr)
-            fr.close()
+# class Player:
+#     def __init__(self, _name="___", _player_type = "Random"):
+#         self._name = _name
+#         self._player_type = _player_type    # Random / Human / DQN
+#         self.model = None
+#         if self._player_type == "DQN":
+#             self.model = DQN.load(_name)
+#         if self._player_type == "Minimax":
+#             fr = open("/home/alexandre/sem-project-logs/" + self._name, 'rb')
+#             self.model = pickle.load(fr)
+#             fr.close()
+#         if self._player_type == "Q_learning":
+#             fr = open("policy_q_learning", 'rb')
+#             self.agent = Agent()
+#             self.agent.states_value = pickle.load(fr)
+#             fr.close()
 
-    def choose_action(self, positions, board = None, player = 1):  # Corrigir depois
-        if self._player_type == "Human":
-            while True:
-                row = input("Input your action row:")
-                col = input("Input your action col:")
-                try:
-                    row = int(row)
-                    col = int(col)
+#     def choose_action(self, positions, board = None, player = 1):  # Corrigir depois
+#         if self._player_type == "Human":
+#             while True:
+#                 row = input("Input your action row:")
+#                 col = input("Input your action col:")
+#                 try:
+#                     row = int(row)
+#                     col = int(col)
 
-                    action = (row, col)
-                    if action in positions:
-                        return action
+#                     action = (row, col)
+#                     if action in positions:
+#                         return action
 
-                except:
-                    print("Wrong move format")
-        elif self._player_type == "DQN":
-            action, _states = self.model.predict(board.get_one_hot())
-            action = (int(action / BOARD_COLS), int(action % BOARD_COLS))
-        elif self._player_type == "Minimax":
-            minimax_move = Minimax.minimax_main_pruning_sym(board, 35, -100, 100, player, self.model)
-            action = (minimax_move[0], minimax_move[1])
-        elif self._player_type == "Q_learning":
-            action, _states = self.agent.choose_action(positions, board)
-            action = (int(action / BOARD_COLS), int(action % BOARD_COLS))
-        elif self._player_type == "Monte_Carlo":
-            minimax_move = Minimax.minimax_main_pruning_sym(board, 35, -100, 100, 1, self.model)
-            action = (minimax_move[0], minimax_move[1])
-        else:
-            idx = np.random.choice(len(positions))
-            action = positions[idx]
+#                 except:
+#                     print("Wrong move format")
+#         elif self._player_type == "DQN":
+#             action, _states = self.model.predict(board.get_one_hot())
+#             action = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+#         elif self._player_type == "Minimax":
+#             minimax_move = Minimax.minimax_main_pruning_sym(board, 35, -100, 100, player, self.model)
+#             action = (minimax_move[0], minimax_move[1])
+#         elif self._player_type == "Q_learning":
+#             action, _states = self.agent.choose_action(positions, board)
+#             action = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+#         elif self._player_type == "Monte_Carlo":
+#             minimax_move = Minimax.minimax_main_pruning_sym(board, 35, -100, 100, 1, self.model)
+#             action = (minimax_move[0], minimax_move[1])
+#         else:
+#             idx = np.random.choice(len(positions))
+#             action = positions[idx]
 
-        return action
+#         return action
 
 # class VisualGame(tk.Frame):
 #     def __init__(self, parent, p2):

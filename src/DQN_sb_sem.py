@@ -7,6 +7,7 @@ import gym_sem
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 from stable_baselines.deepq.policies import FeedForwardPolicy
 from stable_baselines.deepq.policies import CnnPolicy, MlpPolicy
@@ -15,6 +16,7 @@ from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines import DQN
 
 layer_size = 32
+layer_size_cnn = 128
 
 class CustomDQNPolicy(FeedForwardPolicy):
     def __init__(self, *args, **kwargs):
@@ -22,15 +24,24 @@ class CustomDQNPolicy(FeedForwardPolicy):
                                            layers=[layer_size, layer_size],
                                            layer_norm=False,
                                            feature_extraction="mlp")
+                                        
+class CustomDQNPolicy_Cnn(FeedForwardPolicy):
+    def __init__(self, *args, **kwargs):
+        super(CustomDQNPolicy_Cnn, self).__init__(*args, **kwargs,
+                                           layers=[layer_size_cnn, layer_size_cnn],
+                                           layer_norm=False,
+                                           feature_extraction="cnn")
 
-train_steps = 100000
+train_steps = 200000
 test_steps = 10000
-save_file = str(int(train_steps/1000)) + "k_mm_sem3_3x4_dqn_32"
+save_file = str(int(train_steps/1000)) + "k_sem1_3x4_" + str(int(layer_size))
 env = make_vec_env('sem-v0', n_envs=1)
 #model = DQN.load("/home/alexandre/sem-project-logs/" + save_file, env)
 model = DQN(CustomDQNPolicy, env, verbose=1)
+t0 = time.clock()
 model.learn(total_timesteps=train_steps)
-model.save("/home/alexandre/sem-project-logs/" + save_file)
+print(time.clock() - t0)
+model.save("/home/alexandre/sem-project-logs/dqn/" + save_file)
 mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=test_steps)
 print(f"mean_reward:{mean_reward:.5f} +/- {std_reward:.5f}")
 

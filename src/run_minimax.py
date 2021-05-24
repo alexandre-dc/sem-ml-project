@@ -6,7 +6,7 @@ import time
 
 board = Board()
 board_nextMoves = {}
-minimax = Minimax("MMPS", 35, -100, 100, board_nextMoves, force_best_move=False)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
+minimax = Minimax("MMPS", 35, -100, 100, board_nextMoves, force_best_move=True)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
 done = False                                                                                # Main_Prunning_Symmetric   /   Main_Prunning   /   Main    /   Simple_Prunning    /    Simple
 
 t0 = time.clock()
@@ -35,7 +35,7 @@ while not done:
 t1 = time.clock() - t0
 print(t1)
 
-fw = open('/home/alexandre/sem-project-logs/board_nextMoves' + str(''), 'wb')
+fw = open('/home/alexandre/sem-project-logs/minimax/board_nextMoves_3_4_3_mmps' + str(''), 'wb')
 pickle.dump(board_nextMoves, fw)
 fw.close()
 

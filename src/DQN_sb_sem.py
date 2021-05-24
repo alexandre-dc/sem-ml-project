@@ -32,10 +32,11 @@ class CustomDQNPolicy_Cnn(FeedForwardPolicy):
                                            layer_norm=False,
                                            feature_extraction="cnn")
 
-train_steps = 200000
+train_steps = 20000
 test_steps = 10000
-save_file = str(int(train_steps/1000)) + "k_sem1_3x4_" + str(int(layer_size))
-env = make_vec_env('sem-v0', n_envs=1)
+save_file = str(int(train_steps/1000)) + "k_sem1_3x2_" + str(int(layer_size))
+#env = make_vec_env('sem-v0', n_envs=1)
+env = gym.make('sem-v0', _type='DQN')
 #model = DQN.load("/home/alexandre/sem-project-logs/" + save_file, env)
 model = DQN(CustomDQNPolicy, env, verbose=1)
 t0 = time.clock()

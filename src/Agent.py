@@ -27,9 +27,7 @@ class Agent:
 
     def choose_action(self, current_board):
         positions = current_board.availablePositions()
-        #print(self.test_mode)
         if self.test_mode:                                  # Choose action while being tested
-            #print(current_board.all_positions)
             action = self.predict(positions, current_board)
         else:                                               # Choose action while being trained
             if np.random.rand() <= self.epsilon:         # Random action
@@ -45,10 +43,8 @@ class Agent:
         for p in positions:
             current_board.make_move(p)
             board_hash = current_board.getHash()
-            #print(board_hash)
             if board_hash in self.states_value.keys():
                 possible_states_values.append( self.states_value.get(board_hash) )
-                #print(self.states_value.get(board_hash))
             else:
                 possible_states_values.append( -2 )
             current_board.undo_move(p)

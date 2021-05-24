@@ -54,7 +54,7 @@ class VisualGame(tk.Frame):
         #self.winner_txt.place(x = 200, y = 400)
 
         self.board = Board()
-        self.bot_turn = 1
+        self.bot_turn = -1
         #.bot_type = "Q-learning"
 
         # if self.bot_type == "DQN":
@@ -70,10 +70,10 @@ class VisualGame(tk.Frame):
     def makeMove(self, event):
         print(self.bot_type)
         if self.check_win() == -1 and self.bot_type != None:
-            x = int(event.x / 100)
-            y = int(event.y / 100)
+            y = int(event.x / 100)
+            x = int(event.y / 100)
             print(x, y)
-            moveMade = self.board.make_move((y, x))
+            moveMade = self.board.make_move((x, y))
             print(moveMade)
             if moveMade == 1:
                 self.update_visual()
@@ -104,18 +104,21 @@ class VisualGame(tk.Frame):
                         fill="yellow", width=3, tags="move")
                 elif self.board.state[i, j] == 3:
                     self.canvas.create_oval(10 + 100*j, 10 + 100*i, 90 + 100*j, 90 + 100*i,
-                        fill="red", width=3, tags="move") 
+                        fill="red", width=3, tags="move")
     
     def update_bot_type(self):
         try:
             if self.bot_type == "DQN":
-                self.p2 = Player(_name="200k_mm_sem1_3x4_32", _player_type="DQN")
+                self.p2 = Player(_name="20k_sem1_3x2_32", _player_type="DQN")
             elif self.bot_type == "Minimax":
                 self.p2 = Player(_name="board_nextMoves_3_4_3_mmps", _player_type="Minimax")
             elif self.bot_type == "Q-learning":
+                print('here')
                 self.p2 = Player(_name="policy2_sem1_3_2_20k", _player_type="Q-learning")
+                print(self.p2.agent.states_value)
+            elif self.bot_type == "Monte Carlo":
                 print("here")
-            
+                self.p2 = Player(_name="policy_sem1_3_2_SCM_1k", _player_type="Monte Carlo")
         except:
             print("Error trying to load bot's data")
 
@@ -123,10 +126,16 @@ class VisualGame(tk.Frame):
         if return_line:
             win_flag, win_line = self.board.check_win(return_line=True)
             if win_flag != -1:
-                if self.board.movesMade % 2 == 0:
-                    txt = "You Won!"
+                if self.bot_turn == 1:
+                    if self.board.movesMade % 2 == 0:
+                        txt = "You Won!"
+                    else:
+                        txt = "You Lost..."
                 else:
-                    txt = "You Lost..."
+                    if self.board.movesMade % 2 != 0:
+                        txt = "You Won!"
+                    else:
+                        txt = "You Lost..."
                 self.winner_txt["text"] = txt
 
                 line_dir =  (win_line[2][0] - win_line[0][0], win_line[2][1] - win_line[0][1])

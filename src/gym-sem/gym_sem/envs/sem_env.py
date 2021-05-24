@@ -4,6 +4,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 
 import numpy as np
+from tensorflow.python.ops.gen_array_ops import broadcast_to_eager_fallback
 
 import sem_game
 from sem_game import Board
@@ -16,12 +17,14 @@ MAX_MOVES = sem_game.MAX_MOVES
 class SemEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, _type='DQN'):
+        self._type = _type
+
         self.action_space = spaces.Discrete(BOARD_ROWS * BOARD_COLS)
         self.observation_space = spaces.Box(low=0, high=1, shape=(BOARD_ROWS, BOARD_COLS, MAX_MOVES), dtype=np.uint8)
         #self.observation_space = spaces.Box(low=0, high=1, shape=(64, 64, MAX_MOVES), dtype=np.uint8)
 
-        #self.rand_bot = Player(_name="board_nextMoves", _player_type="Minimax")
+        #self.bot_player = Player(_name="board_nextMoves", _player_type="Minimax")
         self.rand = Player()
         self.agent_turn = -1
 
@@ -35,77 +38,76 @@ class SemEnv(gym.Env):
     def step(self, action = -1):
         reward = 0
         #----------------- Monte Carlo's Step ------------------------------
+        if self._type == 'Monte Carlo':
+            if action != -1:
+                if type(action) == int:
+                    movePos = (int(action/BOARD_COLS), int(action%BOARD_COLS))
+                else:
+                    movePos = action
+                moveDone = self.board.make_move(movePos)
 
-        # if action != -1:
-        #     if type(action) == int:
-        #         movePos = (int(action/BOARD_COLS), int(action%BOARD_COLS))
-        #     else:
-        #         movePos = action
-        #     moveDone = self.board.make_move(movePos)
+                win = self.board.check_win()
+                if win >= 0:
+                    reward = self.board.turn
+                    self.done = True
+                    
+                    return self.board.getHash(), reward, self.done, {}
+            
+            else:
+                #positions = self.board.availablePositions()
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
 
-        #     win = self.board.check_win()
-        #     if win >= 0:
-        #         reward = self.board.turn
-        #         self.done = True
-                
-        #         return self.board.getHash(), reward, self.done, {}
-        
-        # else:
-        #     positions = self.board.availablePositions()
-        #     movePos = self.rand_bot.choose_action(positions)
-        #     moveDone = self.board.make_move(movePos)
+                win = self.board.check_win()
+                if win >= 0:
+                    reward = self.board.turn
+                    self.done = True
+                    
+                    return self.board.getHash(), reward, self.done, {}
 
-        #     win = self.board.check_win()
-        #     if win >= 0:
-        #         reward = self.board.turn
-        #         self.done = True
-                
-        #         return self.board.getHash(), reward, self.done, {}
-
-        # return self.board.getHash(), reward, self.done, {}
+            return self.board.getHash(), reward, self.done, {}
 
         #-------------------- DQN SB's Step -----------------------------------
 
+        if self._type == "DQN":
             #---------- Agent Move -----------------------------
-        
+            move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+            moveDone = self.board.make_move(move_pos)
 
-        move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
-        moveDone = self.board.make_move(move_pos)
-
-        if moveDone == 0:
-            reward = -2
-            self.done = True
+            if moveDone == 0:
+                reward = -2
+                self.done = True
+                
+                return self.board.get_one_hot(self.padding), reward, self.done, {}
             
-            return self.board.get_one_hot(self.padding), reward, self.done, {}
-        
-        win = self.board.check_win()
-        if win != -1:
-            reward = 1
-            self.done = True
-            
-            return self.board.get_one_hot(self.padding), reward, self.done, {}
+            win = self.board.check_win()
+            if win != -1:
+                reward = 1
+                self.done = True
+                
+                return self.board.get_one_hot(self.padding), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
-        if np.random.rand() < 0:
-            positions = self.board.availablePositions()
-            botMove = self.rand_bot.choose_action(self.board, player = -self.agent_turn)
-            moveDone = self.board.make_move((botMove[0], botMove[1]))
-        else:
-            positions = self.board.availablePositions()
-            botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
-            moveDone = self.board.make_move((botMove[0], botMove[1]))
+            if np.random.rand() < 0:
+                positions = self.board.availablePositions()
+                botMove = self.bot_player.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+            else:
+                positions = self.board.availablePositions()
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
 
-        win = self.board.check_win()
-        if win != -1:
-            reward = -1
-            self.done = True
-            
+            win = self.board.check_win()
+            if win != -1:
+                reward = -1
+                self.done = True
+                
+                return self.board.get_one_hot(self.padding), reward, self.done, {}
+
+            # return self.board.state, reward, self.done, {}
+            # return self.one_hot_encode(self.board.state), reward, self.done, {}
             return self.board.get_one_hot(self.padding), reward, self.done, {}
-
-        # return self.board.state, reward, self.done, {}
-        # return self.one_hot_encode(self.board.state), reward, self.done, {}
-        return self.board.get_one_hot(self.padding), reward, self.done, {}
-        #return canonic_state, reward, self.done, {}
+            #return canonic_state, reward, self.done, {}
 
     def reset(self):
         self.board.reset()

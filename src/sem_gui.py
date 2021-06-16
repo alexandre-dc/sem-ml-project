@@ -1,6 +1,5 @@
 import tkinter as tk
 import numpy as np
-from tkinter import font
 
 from sem_game import Board
 import sem_game
@@ -36,26 +35,41 @@ class VisualGame(tk.Frame):
         self.canvas.pack(fill="both", expand=1)
         self.canvas.bind("<Button-1>", self.makeMove)
 
-        self.tkvar = tk.StringVar(root)
-        self.choices = { 'Minimax','Monte Carlo','Q-learning','DQN'}
-        self.tkvar.set('Minimax') # set the default option
-
-        popupMenu = tk.OptionMenu(root, self.tkvar, *self.choices)
-        # tk.Label(root, text="Choose a dish")
-        popupMenu.pack(side="bottom")
-
         self.reset_b = tk.Button(text="Reset", command=self.reset)
         self.reset_b.pack(side = "bottom")
+
+        self.optionsFrame = tk.Frame()
+        self.optionsFrame.pack(side="bottom")
+        
+
+
+        self.alg_choice = tk.StringVar(root)
+        self.alg_choices = { 'Minimax','Monte Carlo','Q-learning','DQN'}
+        self.alg_choice.set('Monte Carlo') # set the default option
+
+        popupMenu = tk.OptionMenu(self.optionsFrame, self.alg_choice, *self.alg_choices)
+        # tk.Label(root, text="Choose a dish")
+        popupMenu.pack(side="right")
+
+        self.player_choice = tk.StringVar(root)
+        self.player_choices = { 'Player 1', 'Player 2' }
+        self.player_choice.set('Player 1') # set the default option
+
+        popupMenu1 = tk.OptionMenu(self.optionsFrame, self.player_choice, *self.player_choices)
+        # tk.Label(root, text="Choose a dish")
+        popupMenu1.pack(side="left", padx=15, pady=0)
+
+        
 
         #self.txt_frame = tk.Frame(root, )
         self.winner_txt = tk.Label(self.canvas, height=1, width=50, bg="grey")
         self.winner_txt.config(font=("Arial",15))
-        self.winner_txt.pack(side="bottom", padx=0, pady=15)
+        self.winner_txt.pack(side="bottom", padx=0, pady=0)
         #self.winner_txt.place(x = 200, y = 400)
 
         self.board = Board()
         self.bot_turn = -1
-        #.bot_type = "Q-learning"
+        self.bot_type = "Monte Carlo"
 
         # if self.bot_type == "DQN":
         #     self.p2 = Player(_name="200k_mm_sem1_3x4_32", _player_type="DQN")
@@ -64,6 +78,7 @@ class VisualGame(tk.Frame):
         # elif self.bot_type == "Q-Learning":
         #     self.p2 = Player(_name="policy_sem1_3_2_20k", _player_type="Q-Learning")
 
+        self.update_bot_type()
         self.reset()
         
 
@@ -86,7 +101,7 @@ class VisualGame(tk.Frame):
     def bot_move(self):
         positions = self.board.availablePositions()
         action = self.p2.choose_action(self.board, player = self.bot_turn)
-        print(action)
+        print("here" + str(action))
         moveMade = self.board.make_move(action)
         print(moveMade)
         if moveMade == 1:
@@ -109,16 +124,19 @@ class VisualGame(tk.Frame):
     def update_bot_type(self):
         try:
             if self.bot_type == "DQN":
-                self.p2 = Player(_name="20k_sem1_3x2_32", _player_type="DQN")
+                if self.bot_turn == -1:
+                    self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="DQN")
+                else:
+                    self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="DQN")
             elif self.bot_type == "Minimax":
-                self.p2 = Player(_name="board_nextMoves_3_4_3_mmps", _player_type="Minimax")
+                self.p2 = Player(_name="board_nextMoves_3_4_3" + "_mmps", _player_type="Minimax")
             elif self.bot_type == "Q-learning":
-                print('here')
-                self.p2 = Player(_name="policy2_sem1_3_2_20k", _player_type="Q-learning")
-                print(self.p2.agent.states_value)
+                if self.bot_turn == -1:
+                    self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="Q-learning")
+                else:
+                    self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="Q-learning")
             elif self.bot_type == "Monte Carlo":
-                print("here")
-                self.p2 = Player(_name="policy_sem1_3_2_SCM_1k", _player_type="Monte Carlo")
+                self.p2 = Player(_name="policy_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS) + "_SCM", _player_type="Monte Carlo")
         except:
             print("Error trying to load bot's data")
 
@@ -164,8 +182,20 @@ class VisualGame(tk.Frame):
         self.canvas.delete("win_line")
         self.winner_txt["text"] = ""
 
-        self.bot_type = self.tkvar.get()
-        self.update_bot_type()
+        if self.bot_type != self.alg_choice.get():
+            self.bot_type = self.alg_choice.get()
+            self.update_bot_type()
+        if self.bot_turn == 1 and self.player_choice.get() == "Player 1":
+            self.bot_turn = -1
+            self.update_bot_type()
+        if self.bot_turn == -1 and self.player_choice.get() == "Player 2":
+            self.bot_turn = 1
+            self.update_bot_type()
+
+        # if self.player_choice.get() == "Player 1":
+        #     self.bot_turn = -1
+        # else:
+        #     self.bot_turn = 1
 
         if self.bot_turn == 1:
             self.bot_move()

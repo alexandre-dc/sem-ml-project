@@ -27,15 +27,11 @@ class Player:
             self.minimax = Minimax("MMPS", 35, -100, 100, self.model, force_best_move=True)
             fr.close()
         elif self._player_type == "Q-learning":
-            fr = open("/home/alexandre/sem-project-logs/q_learning/" + self._name, 'rb')
             self.agent = Agent()
+            self.agent.loadPolicy(_name)
             self.agent.set_test_mode(True)
-            print("here")
-            self.agent.states_value = pickle.load(fr)
-            print("here1")
-            fr.close()
         elif self._player_type == "Monte Carlo":
-            self.monte_carlo = Monte_Carlo()
+            self.monte_carlo = Monte_Carlo("SCM")
             f_results_file = open("/home/alexandre/sem-project-logs/monte_carlo/" + self._name + "_f_results", 'rb')
             dcs_file = open("/home/alexandre/sem-project-logs/monte_carlo/" + self._name + "_dcs", 'rb')
             self.f_results = pickle.load(f_results_file)
@@ -70,6 +66,10 @@ class Player:
             action = self.agent.choose_action(board)
             #action = (int(action / BOARD_COLS), int(action % BOARD_COLS))
         elif self._player_type == "Monte Carlo":
+            if board != None:
+                self.monte_carlo.env.board = board
+                board.showBoard()
+            print("Player - " + str(player))
             action = self.monte_carlo.run_test(self.f_results, self.dcs, player)
         else:
             idx = np.random.choice(len(positions))

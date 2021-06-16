@@ -4,7 +4,7 @@ import pickle
 
 
 class Agent:
-    def __init__(self, name="___", epsilon=0.8, epsilon_rate=0.2, epsilon_min=0.02, lr=0.001, gamma=0.99, model = None):
+    def __init__(self, name="___", epsilon=0.8, epsilon_rate=0.2, epsilon_min=0.02, lr=0.0001, gamma=0.99, model = None):
         self.name = name
         self.states = []  # record all positions taken
         self.moves = []
@@ -15,6 +15,7 @@ class Agent:
         self.epsilon_min = epsilon_min
         self.gamma = gamma
         self.states_value = {}  # q-value for each explored state
+        self.dict_canonic_states = {}
         self.all_rewards = []
         self.all_rewards_means = []
         self.epsilon_drop_rate = 0
@@ -39,16 +40,32 @@ class Agent:
         return action
 
     def predict(self, positions, current_board):
+            # ....... Without canonic states ...............
+        # possible_states_values = []
+        # for p in positions:
+        #     current_board.make_move(p)
+        #     board_hash = current_board.getHash()
+        #     if board_hash in self.states_value.keys():
+        #         possible_states_values.append( self.states_value.get(board_hash) )
+        #     else:
+        #         possible_states_values.append( -2 )
+        #     current_board.undo_move(p)
+        # idx, value = max(enumerate(possible_states_values), key=operator.itemgetter(1))
+
+            # ........ With canonic states ...............
         possible_states_values = []
         for p in positions:
             current_board.make_move(p)
-            board_hash = current_board.getHash()
-            if board_hash in self.states_value.keys():
-                possible_states_values.append( self.states_value.get(board_hash) )
+            canonic_state, all_symmetry = current_board.get_canonic_state(current_board.getHash())
+            key_state = str(canonic_state)
+            if key_state in self.states_value.keys():
+                possible_states_values.append( self.states_value.get(key_state) )
             else:
                 possible_states_values.append( -2 )
             current_board.undo_move(p)
+        #print(possible_states_values)
         idx, value = max(enumerate(possible_states_values), key=operator.itemgetter(1))
+
         # current_board.showBoard()
         # print(positions)
         #print(possible_states_values)
@@ -142,11 +159,17 @@ class Agent:
         if name == '':
             name = self.name
 
-        fw = open('/home/alexandre/sem-project-logs/q_learning/' + str(name), 'wb')
+        fw = open('/home/alexandre/sem-project-logs/q_learning/' + str(name) + 'st_values', 'wb')
         pickle.dump(self.states_value, fw)
+        fw.close()
+        fw = open('/home/alexandre/sem-project-logs/q_learning/' + str(name) + 'dcs', 'wb')
+        pickle.dump(self.dict_canonic_states, fw)
         fw.close()
 
     def loadPolicy(self, file):
-        fr = open(file, 'rb')
+        fr = open("/home/alexandre/sem-project-logs/q_learning/" + file + "st_values", 'rb')
         self.states_value = pickle.load(fr)
+        fr.close()
+        fr = open("/home/alexandre/sem-project-logs/q_learning/" + file + "dcs", 'rb')
+        self.dict_canonic_states = pickle.load(fr)
         fr.close()

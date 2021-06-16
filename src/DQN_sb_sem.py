@@ -1,13 +1,12 @@
-import gym 
-# from gym import envs
-# for env in envs.registry.all():
-#     print(env)
+import gym
 import gym_sem
+import sem_game
 
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import pickle
 
 from stable_baselines.deepq.policies import FeedForwardPolicy
 from stable_baselines.deepq.policies import CnnPolicy, MlpPolicy
@@ -15,13 +14,54 @@ from stable_baselines.common import make_vec_env
 from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines import DQN
 
-layer_size = 32
+BOARD_ROWS = sem_game.BOARD_ROWS
+BOARD_COLS = sem_game.BOARD_COLS
+MAX_MOVES = sem_game.MAX_MOVES
+
+layer_size_lst = [64]
+n_train_size_lst = [50000]
+minimax_rate_lst = [0.5]
+
+
+
+layer_size = 8
 layer_size_cnn = 128
 
-class CustomDQNPolicy(FeedForwardPolicy):
-    def __init__(self, *args, **kwargs):
-        super(CustomDQNPolicy, self).__init__(*args, **kwargs,
-                                           layers=[layer_size, layer_size],
+class CustomDQNPolicy_8(FeedForwardPolicy):
+    def __init__(self,*args, **kwargs):
+        super(CustomDQNPolicy_8, self).__init__(*args, **kwargs,
+                                           layers=[8, 8],
+                                           layer_norm=False,
+                                           feature_extraction="mlp")
+class CustomDQNPolicy_16(FeedForwardPolicy):
+    def __init__(self,*args, **kwargs):
+        super(CustomDQNPolicy_16, self).__init__(*args, **kwargs,
+                                           layers=[16, 16],
+                                           layer_norm=False,
+                                           feature_extraction="mlp")
+class CustomDQNPolicy_32(FeedForwardPolicy):
+    def __init__(self,*args, **kwargs):
+        super(CustomDQNPolicy_32, self).__init__(*args, **kwargs,
+                                           layers=[32, 32],
+                                           layer_norm=False,
+                                           feature_extraction="mlp")
+class CustomDQNPolicy_64(FeedForwardPolicy):
+    def __init__(self,*args, **kwargs):
+        super(CustomDQNPolicy_64, self).__init__(*args, **kwargs,
+                                           layers=[64, 64],
+                                           layer_norm=False,
+                                           feature_extraction="mlp")
+class CustomDQNPolicy_128(FeedForwardPolicy):
+    def __init__(self,*args, **kwargs):
+        super(CustomDQNPolicy_128, self).__init__(*args, **kwargs,
+                                           layers=[128, 128],
+                                           layer_norm=False,
+                                           feature_extraction="mlp")
+
+class CustomDQNPolicy_256(FeedForwardPolicy):
+    def __init__(self,*args, **kwargs):
+        super(CustomDQNPolicy_128, self).__init__(*args, **kwargs,
+                                           layers=[128, 128],
                                            layer_norm=False,
                                            feature_extraction="mlp")
                                         
@@ -32,19 +72,23 @@ class CustomDQNPolicy_Cnn(FeedForwardPolicy):
                                            layer_norm=False,
                                            feature_extraction="cnn")
 
-train_steps = 20000
-test_steps = 10000
-save_file = str(int(train_steps/1000)) + "k_sem1_3x2_" + str(int(layer_size))
-#env = make_vec_env('sem-v0', n_envs=1)
-env = gym.make('sem-v0', _type='DQN')
-#model = DQN.load("/home/alexandre/sem-project-logs/" + save_file, env)
-model = DQN(CustomDQNPolicy, env, verbose=1)
-t0 = time.clock()
-model.learn(total_timesteps=train_steps)
-print(time.clock() - t0)
-model.save("/home/alexandre/sem-project-logs/dqn/" + save_file)
-mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=test_steps)
-print(f"mean_reward:{mean_reward:.5f} +/- {std_reward:.5f}")
+# train_steps = 100000
+# test_steps = 1000
+# # save_file = str(int(train_steps/1000)) + "k_sem1_3x2_" + str(int(layer_size))
+# #env = make_vec_env('sem-v0', n_envs=1)
+# env = gym.make('sem-v0', _type='DQN')
+# env_test = gym.make('sem-v0', _type='DQN_test')
+# save_file = "policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS)
+# env.agent_turn = -1
+# env_test.agent_turn = -1
+# #model = DQN.load("/home/alexandre/sem-project-logs/" + save_file, env)
+# model = DQN(CustomDQNPolicy, env, verbose=1)
+# t0 = time.clock()
+# model.learn(total_timesteps=train_steps)
+# print(time.clock() - t0)
+# model.save("/home/alexandre/sem-project-logs/dqn/" + save_file)
+# mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=test_steps)
+# print(f"mean_reward:{mean_reward:.5f} +/- {std_reward:.5f}")
 
 # t = []
 # t_step = 10
@@ -64,4 +108,56 @@ print(f"mean_reward:{mean_reward:.5f} +/- {std_reward:.5f}")
 
 # plt.plot(t)
 # plt.show()
+
+
+env_test = gym.make('sem-v0', _type='DQN_test')
+print(len(env_test.minimax_player.model))
+save_file = "policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS)
+env_test.agent_turn = -1
+
+test_steps = 1000
+
+for minimax_rate in minimax_rate_lst:
+    env = gym.make('sem-v0', _type='DQN', _minimax_rate=minimax_rate)
+    env.agent_turn = -1
+    for l_size in layer_size_lst:
+        for n_train in n_train_size_lst:
+            sum = 0
+            for i in range(1):
+                if l_size == 8:
+                    model = DQN(CustomDQNPolicy_8, env, verbose=1, exploration_fraction=0.2)
+                elif l_size == 16:
+                    model = DQN(CustomDQNPolicy_16, env, verbose=1, exploration_fraction=0.2)
+                elif l_size == 32:
+                    model = DQN(CustomDQNPolicy_32, env, verbose=1, exploration_fraction=0.2)
+                elif l_size == 64:
+                    model = DQN(CustomDQNPolicy_64, env, verbose=1, exploration_fraction=0.2)
+                elif l_size == 128:
+                    model = DQN(CustomDQNPolicy_128, env, verbose=1, exploration_fraction=0.2)
+                elif l_size == 256:
+                    model = DQN(CustomDQNPolicy_256, env, verbose=1, exploration_fraction=0.2)
+                else:
+                    model = DQN(CustomDQNPolicy_256, env, verbose=1, exploration_fraction=0.2)
+                t0 = time.clock()
+                model.learn(total_timesteps=n_train)
+                time_learning = time.clock() - t0
+                mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=test_steps)
+                model.save("/home/alexandre/sem-project-logs/dqn/" + save_file)
+                print(minimax_rate)
+                print(l_size)
+                print(n_train)
+                print(mean_reward)
+                f = open("log.txt", "a")
+                f.write(str(time_learning) + "\n")
+                f.write(str(minimax_rate) + "\n")
+                f.write(str(l_size) + "\n")
+                f.write(str(n_train) + "\n")
+                f.write(str(mean_reward) + "\n")
+                f.write("\n")
+                f.close()
+    
+fw = open('/home/alexandre/sem-project-logs/minimax/board_nextMoves_' + str(sem_game.MAX_MOVES) + "_" + str(sem_game.BOARD_ROWS) + "_" + str(sem_game.BOARD_COLS) + "_" + "mmps", 'wb')
+pickle.dump(env.minimax_player.model, fw)
+fw.close()
 env.close()
+env_test.close()

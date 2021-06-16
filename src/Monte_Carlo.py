@@ -9,12 +9,12 @@ class Monte_Carlo:
         self.env = gym.make('sem-v0', _type='Monte Carlo')
         self._type = _type
 
-    def monte_carlo_search(self, n_steps):
+    def monte_carlo_search(self, n_steps, resultes={}, dict_canonic_states={}):
         # test_resultes = {}
         # time_searching = {}
         # t0 = time.clock()
-        resultes = {}
-        dict_canonic_states = {}
+        resultes = resultes
+        dict_canonic_states = dict_canonic_states
 
         for i in range(n_steps):
             print("Searching:", int(i/n_steps * 100), "%", end='\r' + '\t'*4)
@@ -26,9 +26,12 @@ class Monte_Carlo:
 
             while not done:
                 s, r, done, _ = self.env.step()
-                s_list.append((s, r))
+                if done:
+                    s_list.append((s, r))
+                else:
+                    s_list.append((s, 0))
 
-                self.env.board.turn *= -1
+                #self.env.board.turn *= -1
             
             G = 0
             s_list.reverse()
@@ -46,6 +49,7 @@ class Monte_Carlo:
                 # else:
                 #     resultes[in_results].append(G)
                 #------------------------- SCM Search ----------------------------     Symmetry and Canonic Memory
+                #print(type(st[0]))
                 if str(st[0]) in dict_canonic_states:
                     key_state = dict_canonic_states[str(st[0])]
                     resultes[key_state].append(G)
@@ -105,6 +109,9 @@ class Monte_Carlo:
         return f_results, dict_canonic_states
 
     def run_test (self, f_results, dict_canonic_states, turn):
+        #self.env.board.showBoard()
+        #print("turn-  " + str(turn))
+        #self.env.board.showBoard()
         possible_Boards = self.env.possible_move_boards()
         #------------------------ SnC Test -----------------------------    Symmetry non Canonic
         # possible_Values = []
@@ -132,6 +139,7 @@ class Monte_Carlo:
         #------------------------- nS Test ----------------------------     Non Symmetry
         # possible_Values = [f_results[str(s[0])] for s in possible_Boards]
         #--------------------------------------------------------------
+        #print(possible_Values)
         if turn == 1:
             best_State_Index = possible_Values.index(max(possible_Values))
         else:
@@ -141,7 +149,10 @@ class Monte_Carlo:
         return action
                     
     #-------------------- Monte Carlo Test ----------------------
-    def test_MC (self, f_results, n_test, dict_canonic_states):
+    def test_MC (self, n_test, f_results, dict_canonic_states, minimax_test=False):
+        if minimax_test:
+            self.env.minimax_test = True
+            self.env.agent_turn = 1
 
         all_rewards = []
         error = 0
@@ -149,7 +160,7 @@ class Monte_Carlo:
             print("Testing:", int(i/n_test * 100), "%", end='\r' + '\t'*4)
             state = self.env.reset()
             done = False
-            turn = 1
+            turn = -1
 
             while not done:
                 if turn == -1:
@@ -167,6 +178,10 @@ class Monte_Carlo:
                     break
 
                 turn *= -1
+
+        if minimax_test:
+            self.env.minimax_test = False
+            self.env.agent_turn = 1
 
         return error, sum(all_rewards)/len(all_rewards), len(f_results)
 

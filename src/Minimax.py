@@ -33,8 +33,8 @@ class Minimax:
         if depth == 0:
             return [-1, -1, 0]
 
-        if depth == 34:
-            print("here")
+        # if depth == 34:
+        #     print("- ", end="")
 
         for pos in board.availablePositions():      # Verificar se algum dos proximos moves dá vitoria imediata
             x, y = pos[0], pos[1]
@@ -85,12 +85,12 @@ class Minimax:
         if board_nextMoves.get(board.getHash()) == None:
             board_nextMoves[board.getHash()] = best     # Adicionar ao dicionario o melhor move para este estado do board
 
-        # if self.force_best_move:
-        #     if best[2] < -player * 0.7:
-        #         idx = np.random.choice(len(board.availablePositions()))
-        #         action = board.availablePositions()[idx]
-        #         best[0] = action[0]
-        #         best[1] = action[1]
+        if self.force_best_move:
+            if best[2] < -player * 0.9:
+                idx = np.random.choice(len(board.availablePositions()))
+                action = board.availablePositions()[idx]
+                best[0] = action[0]
+                best[1] = action[1]
 
         return best
 
@@ -110,8 +110,8 @@ class Minimax:
         if depth == 0:
             return [-1, -1, 0]
 
-        if depth == 34:
-            print("here")
+        # if depth == 34:
+        #     print("here")
 
         for pos in board.availablePositions():      # Verificar se algum dos proximos moves dá vitoria imediata
             x, y = pos[0], pos[1]
@@ -173,8 +173,8 @@ class Minimax:
         if depth == 0:
             return [-1, -1, 0]
 
-        if depth == 34:
-            print("here")
+        # if depth == 34:
+        #     print("here")
 
         for pos in board.availablePositions():      # Verificar se algum dos proximos moves dá vitoria imediata
             x, y = pos[0], pos[1]
@@ -273,8 +273,8 @@ class Minimax:
         if depth == 0:
             return [-1, -1, 0]
 
-        if depth == 34:
-            print("here")
+        # if depth == 34:
+        #     print("here")
 
         for pos in board.availablePositions():
             x, y = pos[0], pos[1]
@@ -301,9 +301,9 @@ class Minimax:
         if self._minimax_type == "MMPS":
             return self.minimax_main_pruning_sym(board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
         elif self._minimax_type == "MMP":
-            return self.minimax_main_pruning(self.board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
+            return self.minimax_main_pruning(board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
         elif self._minimax_type == "MM":
-            return self.minimax_main(self.board, self.depth, player, self.board_nextMoves)
+            return self.minimax_main(board, self.depth, player, self.board_nextMoves)
         elif self._minimax_type == "MSP":
             return self.minimax_simple(self.board, self.depth, self.alpha, self.beta, player)
         elif self._minimax_type == "MS":

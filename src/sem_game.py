@@ -12,7 +12,7 @@ import operator
 from Agent import Agent
 
 BOARD_ROWS = 3
-BOARD_COLS = 2
+BOARD_COLS = 4
 MAX_MOVES = 1
 
 class Board:                                
@@ -27,6 +27,10 @@ class Board:
         self.sym_num = []
         for i in range(12):
             self.sym_num.append(10**i)
+
+        self.num_board_rows = BOARD_ROWS
+        self.num_board_cols = BOARD_COLS
+        self.num_max_moves = MAX_MOVES
         
         #self.symmetry_masks = [(self.get_array_from_flat(sym[0]), sym[1]) for sym in self.get_symmetry_mask(self.sym_num)]
         
@@ -278,6 +282,8 @@ class Game:
                 action = self.p1.choose_action(self.board)
                 moveMade = self.board.make_move(action)
 
+                # self.p2.addState(self.board.getHash())
+
                 if moveMade == 0:   # Check in move tried was valid
                     return -1
 
@@ -287,8 +293,8 @@ class Game:
                     #self.board.showBoard()
                     return -1
 
-                if type(self.p2) != type(Agent()):
-                    self.p1.addState(self.board.getHash())
+                # if type(self.p2) != type(Agent()):
+                #     self.p1.addState(self.board.getHash())
 
             else:                       # Player 2 play
                 #print("...............")
@@ -304,8 +310,9 @@ class Game:
                 if self.board.check_win() != -1:    # Check win
                     #print("wins p2!")
                     self.done = True
+                    self.p2.addState(self.board.getHash())
+                    #self.board.showBoard()
                     return 1
-
             #self.board.showBoard()
             self.board.turn *= -1
 

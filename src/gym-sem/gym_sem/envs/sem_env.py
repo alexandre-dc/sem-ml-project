@@ -4,6 +4,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 
 import numpy as np
+from numpy import random
 from tensorflow.python.ops.gen_array_ops import broadcast_to_eager_fallback
 
 import sem_game
@@ -17,20 +18,24 @@ MAX_MOVES = sem_game.MAX_MOVES
 class SemEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, _type='DQN'):
+    def __init__(self, _type='DQN', _minimax_rate=0):
         self._type = _type
+        self._minimax_rate = _minimax_rate
 
         self.action_space = spaces.Discrete(BOARD_ROWS * BOARD_COLS)
         self.observation_space = spaces.Box(low=0, high=1, shape=(BOARD_ROWS, BOARD_COLS, MAX_MOVES), dtype=np.uint8)
         #self.observation_space = spaces.Box(low=0, high=1, shape=(64, 64, MAX_MOVES), dtype=np.uint8)
 
-        #self.bot_player = Player(_name="board_nextMoves", _player_type="Minimax")
+        self.minimax_player = Player(_name="board_nextMoves_3_3_4_mmps", _player_type="Minimax")
         self.rand = Player()
-        self.agent_turn = -1
+        self.agent_turn = 1
 
         self.board = Board()
         self.done = False
         self.padding = False
+        self.minimax_test = False
+
+        self.counter = 0
 
         self.reset()
 
@@ -40,6 +45,7 @@ class SemEnv(gym.Env):
         #----------------- Monte Carlo's Step ------------------------------
         if self._type == 'Monte Carlo':
             if action != -1:
+                print("here")
                 if type(action) == int:
                     movePos = (int(action/BOARD_COLS), int(action%BOARD_COLS))
                 else:
@@ -48,27 +54,75 @@ class SemEnv(gym.Env):
 
                 win = self.board.check_win()
                 if win >= 0:
-                    reward = self.board.turn
+                    reward = -1
                     self.done = True
+                    #print(reward)
                     
                     return self.board.getHash(), reward, self.done, {}
+
+                # if self.minimax_test:
+                #     self.board.showBoard()
             
             else:
-                #positions = self.board.availablePositions()
-                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                if self.minimax_test:
+                    botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
+                    #print("here")
+                else:
+                    botMove = self.rand.choose_action(self.board, player = self.board.turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
 
                 win = self.board.check_win()
                 if win >= 0:
                     reward = self.board.turn
                     self.done = True
-                    
+                    #print(reward)
                     return self.board.getHash(), reward, self.done, {}
+
+                # if self.minimax_test:
+                #     self.board.showBoard()
+
+            self.board.turn *= -1
+            return self.board.getHash(), reward, self.done, {}
+
+        #-------------------- Q-learning Step ----------------------------------
+        if self._type == "Q-learning":
+            #---------- Agent Move -----------------------------
+            move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+            moveDone = self.board.make_move(move_pos)
+
+            if moveDone == 0:
+                reward = -2
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+            
+            win = self.board.check_win()
+            if win != -1:
+                reward = 1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+
+            #--------- Random Bot Move -------------------------
+            if np.random.rand() < 0:
+                positions = self.board.availablePositions()
+                botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+            else:
+                positions = self.board.availablePositions()
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            win = self.board.check_win()
+            if win != -1:
+                reward = -1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
 
             return self.board.getHash(), reward, self.done, {}
 
         #-------------------- DQN SB's Step -----------------------------------
-
         if self._type == "DQN":
             #---------- Agent Move -----------------------------
             move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
@@ -88,9 +142,53 @@ class SemEnv(gym.Env):
                 return self.board.get_one_hot(self.padding), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
-            if np.random.rand() < 0:
+            if np.random.rand() < self._minimax_rate:
+                #print("here")
+                #self.board.showBoard()
                 positions = self.board.availablePositions()
-                botMove = self.bot_player.choose_action(self.board, player = -self.agent_turn)
+                botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+                #self.board.showBoard()
+            else:
+                positions = self.board.availablePositions()
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            win = self.board.check_win()
+            if win != -1:
+                reward = -1
+                self.done = True
+                
+                return self.board.get_one_hot(self.padding), reward, self.done, {}
+
+            # return self.board.state, reward, self.done, {}
+            # return self.one_hot_encode(self.board.state), reward, self.done, {}
+            return self.board.get_one_hot(self.padding), reward, self.done, {}
+            #return canonic_state, reward, self.done, {}
+
+        #-------------------- DQN SB's Step Test -----------------------------------
+        if self._type == "DQN_test":
+            #---------- Agent Move -----------------------------
+            move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+            moveDone = self.board.make_move(move_pos)
+
+            if moveDone == 0:
+                reward = -2
+                self.done = True
+                
+                return self.board.get_one_hot(self.padding), reward, self.done, {}
+            
+            win = self.board.check_win()
+            if win != -1:
+                reward = 1
+                self.done = True
+                
+                return self.board.get_one_hot(self.padding), reward, self.done, {}
+
+            #--------- Random Bot Move -------------------------
+            if np.random.rand() < 0.5:
+                positions = self.board.availablePositions()
+                botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
             else:
                 positions = self.board.availablePositions()
@@ -114,9 +212,16 @@ class SemEnv(gym.Env):
         self.done = False
 
         if self.agent_turn == -1:
-            positions = self.board.availablePositions()
-            botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
-            moveDone = self.board.make_move((botMove[0], botMove[1]))
+            if random.rand() < 0.5 and self._type == "DQN" and self.counter < 5000:
+                self.get_init_board()
+            else:
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            self.board.turn = -1
+
+        if self.minimax_test:
+            self.board.showBoard()
 
         # if np.random.choice(range(2)) == 1:
         # if self.agent_turn == -1:
@@ -183,3 +288,45 @@ class SemEnv(gym.Env):
 
     def reshape_cnn(self, state):
         return state.reshape(-1, BOARD_ROWS, BOARD_COLS, MAX_MOVES)
+
+    def get_init_board(self):
+        done = False
+        turn = 1
+        moves_lst = []
+        while not done:
+            if np.random.rand() < 0.1:
+                botMove = self.minimax_player.choose_action(self.board, player = turn)
+            else:
+                botMove = self.rand.choose_action(self.board, player = turn)
+            moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            moves_lst.append(botMove)
+
+            win = self.board.check_win()
+            if win != -1:
+                if turn == -1:
+                    possible_steps_back = []
+                    for i in range(len(moves_lst)):
+                        if i%2 != 0:
+                            possible_steps_back.append(i)
+                    steps_back = random.choice([1])
+                    reversed_moves_lst = []
+                    for move in reversed(moves_lst):
+                        reversed_moves_lst.append(move)
+                    #print(len(moves_lst))
+                    #print(moves_lst)
+                    if turn == 1:
+                        steps_back += 1
+                    for i in range(steps_back):
+                        self.board.undo_move(reversed_moves_lst[i])
+                    done = True
+                else:
+                    self.board.reset()
+                    moves_lst = []
+                    turn = 1
+                
+
+            turn *= -1
+        #self.board.showBoard()
+        self.counter += 1
+        return self.board.get_one_hot(self.padding)

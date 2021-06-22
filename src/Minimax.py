@@ -18,6 +18,8 @@ class Minimax:
             self.beta = beta
             self.board_nextMoves = board_nextMoves
             self.force_best_move = force_best_move
+            self.check_loss = True
+            self.value_loss = []
 
     def minimax_main_pruning_sym(self, board, depth, alpha, beta, player, board_nextMoves):       # Minimax with memory, 1 level breath searsh, alpha-beta pruning and symmetries
         if player == 1:
@@ -60,8 +62,8 @@ class Minimax:
                     break
             else:
                 score = self.minimax_main_pruning_sym(board, depth - 1, alpha, beta, -player, board_nextMoves)
-                if self.force_best_move:
-                    score[2] *= 0.9
+                # if self.force_best_move:
+                #     score[2] *= 0.9
             board.undo_move((x, y))
             score[0], score[1] = x, y
 
@@ -80,18 +82,67 @@ class Minimax:
 
             if score[2] == player:           # Verificar se esta arvore já têm uma jogada optima
                 board_nextMoves[board.getHash()] = best
+                #best.append(depth)
+
                 return best
 
+            if self.force_best_move:
+                #print("best move")
+                if depth == 35:
+                    self.value_loss.append(best[2])
+                if len(self.value_loss) == len(board.availablePositions()):
+                    #print(self.value_loss)
+                    for v in self.value_loss:
+                        if self.value_loss[0] != v:
+                            self.check_loss = False
+                    #print(self.check_loss)
+                    if self.check_loss == True and self.value_loss[0] == 1:
+                        board.showBoard()
+                        idx = np.random.choice(len(board.availablePositions()))
+                        action = board.availablePositions()[idx]
+                        best[0] = action[0]
+                        best[1] = action[1]
+
+        #best.append(depth)
         if board_nextMoves.get(board.getHash()) == None:
             board_nextMoves[board.getHash()] = best     # Adicionar ao dicionario o melhor move para este estado do board
 
-        if self.force_best_move:
-            if best[2] < -player * 0.9:
-                idx = np.random.choice(len(board.availablePositions()))
-                action = board.availablePositions()[idx]
-                best[0] = action[0]
-                best[1] = action[1]
+        # if self.force_best_move:
+        #     if best[2] < player * 0.9:
+        #         idx = np.random.choice(len(board.availablePositions()))
+        #         action = board.availablePositions()[idx]
+        #         best[0] = action[0]
+        #         best[1] = action[1]
 
+        # if self.force_best_move:
+        #     if best[3] > 34:
+        #         print(str(best[0]) + str(best[1]))
+        #         idx = np.random.choice(len(board.availablePositions()))
+        #         action = board.availablePositions()[idx]
+        #         best[0] = action[0]
+        #         best[1] = action[1]
+        #         print("Rand" + str(best[0]) + str(best[1]))
+
+        # if self.force_best_move:
+        #     print(depth)
+        #     print(len(self.value_loss))
+        #     print(len(board.availablePositions()))
+        #     if depth == 35:
+        #         self.value_loss.append(best[2])
+        #     if len(self.value_loss) == len(board.availablePositions()):
+        #         for v in self.value_loss:
+        #             if self.value_loss[0] != v:
+        #                 break
+        #         idx = np.random.choice(len(board.availablePositions()))
+        #         action = board.availablePositions()[idx]
+        #         best[0] = action[0]
+        #         best[1] = action[1]
+
+        if depth == 35:
+            self.check_loss = True
+            self.value_loss = []
+
+        #print(best)
         return best
 
 
@@ -231,8 +282,8 @@ class Minimax:
         if depth == 0:
             return [-1, -1, 0]
 
-        if depth == 34:
-            print("here")
+        # if depth == 34:
+        #     print("here")
 
         for pos in board.availablePositions():
             x, y = pos[0], pos[1]
@@ -305,9 +356,9 @@ class Minimax:
         elif self._minimax_type == "MM":
             return self.minimax_main(board, self.depth, player, self.board_nextMoves)
         elif self._minimax_type == "MSP":
-            return self.minimax_simple(self.board, self.depth, self.alpha, self.beta, player)
+            return self.minimax_simple_pruning(board, self.depth, self.alpha, self.beta, player)
         elif self._minimax_type == "MS":
-            return self.minimax_main_pruning(self.board, self.depth, player)
+            return self.minimax_simple(board, self.depth, player)
         else:
             return 0
 

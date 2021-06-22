@@ -6,11 +6,12 @@ import pickle
 import time
 
 board = Board()
-list_alg = ["MM", "MMP", "MMPS"]
+# list_alg = ["MM", "MMP", "MMPS"]
+list_alg = ["MS", "MSP"]
 logs = {}
 #minimax = Minimax("MMPS", 35, -100, 100, board_nextMoves, force_best_move=True)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
                                                                                       # Main_Prunning_Symmetric   /   Main_Prunning   /   Main    /   Simple_Prunning    /    Simple
-for _ in range(1):
+for _ in range(3):
     for alg in list_alg:
         for i in range(1, 4):
             board_nextMoves = {}
@@ -54,7 +55,7 @@ for _ in range(1):
             else:
                 logs[alg + str(i)] = [t1]
 
-            fw = open('/home/alexandre/sem-project-logs/minimax/board_nextMoves_' + str(sem_game.MAX_MOVES) + "_" + str(sem_game.BOARD_ROWS) + "_" + str(sem_game.BOARD_COLS) + "_" + alg, 'wb')
+            fw = open('/home/alexandre/sem-project-logs/minimax/board_nextMoves_' + str(sem_game.MAX_MOVES) + "_" + str(sem_game.BOARD_ROWS) + "x" + str(sem_game.BOARD_COLS) + "_" + alg, 'wb')
             pickle.dump(board_nextMoves, fw)
             fw.close()
 

@@ -19,13 +19,13 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 layer_size_lst = [64]
-n_train_size_lst = [50000]
-minimax_rate_lst = [0.5]
+n_train_size_lst = [200000]
+minimax_rate_lst = [0.8]
 
 
 
 layer_size = 8
-layer_size_cnn = 128
+layer_size_cnn = 64
 
 class CustomDQNPolicy_8(FeedForwardPolicy):
     def __init__(self,*args, **kwargs):
@@ -110,10 +110,10 @@ class CustomDQNPolicy_Cnn(FeedForwardPolicy):
 # plt.show()
 
 
-env_test = gym.make('sem-v0', _type='DQN_test')
-print(len(env_test.minimax_player.model))
-save_file = "policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS)
-env_test.agent_turn = -1
+#env_test = gym.make('sem-v0', _type='DQN_test')
+#print(len(env_test.minimax_player.model))
+save_file = "policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS)
+#env_test.agent_turn = -1
 
 test_steps = 1000
 
@@ -132,6 +132,8 @@ for minimax_rate in minimax_rate_lst:
                     model = DQN(CustomDQNPolicy_32, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 64:
                     model = DQN(CustomDQNPolicy_64, env, verbose=1, exploration_fraction=0.2)
+                    #model = DQN(CustomDQNPolicy_Cnn, env, verbose=1, exploration_fraction=0.2)
+                    #model = DQN.load("/home/alexandre/sem-project-logs/dqn/" + save_file, env)
                 elif l_size == 128:
                     model = DQN(CustomDQNPolicy_128, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 256:
@@ -141,22 +143,27 @@ for minimax_rate in minimax_rate_lst:
                 t0 = time.clock()
                 model.learn(total_timesteps=n_train)
                 time_learning = time.clock() - t0
-                mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=test_steps)
+                all_rewards = []
+                for i in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
+                    env_test = gym.make('sem-v0', _type='DQN_test', _minimax_rate=i)
+                    env_test.agent_turn = -1
+                    mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=test_steps)
+                    all_rewards.append(mean_reward)
                 model.save("/home/alexandre/sem-project-logs/dqn/" + save_file)
                 print(minimax_rate)
                 print(l_size)
                 print(n_train)
-                print(mean_reward)
+                print(all_rewards)
                 f = open("log.txt", "a")
                 f.write(str(time_learning) + "\n")
                 f.write(str(minimax_rate) + "\n")
                 f.write(str(l_size) + "\n")
                 f.write(str(n_train) + "\n")
-                f.write(str(mean_reward) + "\n")
+                f.write(str(all_rewards) + "\n")
                 f.write("\n")
                 f.close()
     
-fw = open('/home/alexandre/sem-project-logs/minimax/board_nextMoves_' + str(sem_game.MAX_MOVES) + "_" + str(sem_game.BOARD_ROWS) + "_" + str(sem_game.BOARD_COLS) + "_" + "mmps", 'wb')
+fw = open('/home/alexandre/sem-project-logs/minimax/board_nextMoves_' + str(sem_game.MAX_MOVES) + "_" + str(sem_game.BOARD_ROWS) + "x" + str(sem_game.BOARD_COLS) + "_" + "MMPS", 'wb')
 pickle.dump(env.minimax_player.model, fw)
 fw.close()
 env.close()

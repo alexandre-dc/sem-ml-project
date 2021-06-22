@@ -13,7 +13,7 @@ from Agent import Agent
 
 BOARD_ROWS = 3
 BOARD_COLS = 4
-MAX_MOVES = 1
+MAX_MOVES = 3
 
 class Board:                                
     def __init__(self):                     # Inicialização do board
@@ -80,7 +80,7 @@ class Board:
         if padded:
             half_cols = int(BOARD_COLS / 2)
             one_hot_board = np.pad(one_hot_board, ((31, 30), (30, 30), (0, 0)),mode='constant', constant_values=(0))
-            one_hot_board = one_hot_board.reshape(-1, 64, 64, MAX_MOVES)
+            #one_hot_board = one_hot_board.reshape(-1, 64, 64, MAX_MOVES)
         return one_hot_board
 
     def check_win (self, return_line=False):               # Verifica se existe um vencedor - return (-1) se não existir, outro numero se existir
@@ -272,6 +272,8 @@ class Game:
         self.p1 = p1
         self.p2 = p2
         self.done = False
+
+
     
     def play(self):
         while not self.done:
@@ -299,10 +301,14 @@ class Game:
             else:                       # Player 2 play
                 #print("...............")
                 #self.board.showBoard()
+                self.p2.addState(self.board.getHash())
+                
                 action = self.p2.choose_action(self.board)
                 moveMade = self.board.make_move(action)
 
-                self.p2.addState(self.board.getHash())
+                self.p2.addMove(action)
+                # print(self.p2.states)
+                # print(self.p2.moves)
 
                 if moveMade == 0:   # Check in move tried was valid
                     return -1
@@ -310,7 +316,7 @@ class Game:
                 if self.board.check_win() != -1:    # Check win
                     #print("wins p2!")
                     self.done = True
-                    self.p2.addState(self.board.getHash())
+                    #self.p2.addState(self.board.getHash())
                     #self.board.showBoard()
                     return 1
             #self.board.showBoard()

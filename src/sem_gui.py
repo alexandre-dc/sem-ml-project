@@ -99,9 +99,13 @@ class VisualGame(tk.Frame):
 
         
     def bot_move(self):
+        print("-----------")
+        print(self.p2._name)
+        print("-----------")
         positions = self.board.availablePositions()
         action = self.p2.choose_action(self.board, player = self.bot_turn)
-        print("here" + str(action))
+        print("here " + str(self.bot_turn))
+        #print("here" + str(action))
         moveMade = self.board.make_move(action)
         print(moveMade)
         if moveMade == 1:
@@ -125,18 +129,18 @@ class VisualGame(tk.Frame):
         try:
             if self.bot_type == "DQN":
                 if self.bot_turn == -1:
-                    self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="DQN")
+                    self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="DQN")
                 else:
                     self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="DQN")
             elif self.bot_type == "Minimax":
-                self.p2 = Player(_name="board_nextMoves_3_4_3" + "_mmps", _player_type="Minimax")
+                self.p2 = Player(_name="board_nextMoves_"  + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPS", _player_type="Minimax")
             elif self.bot_type == "Q-learning":
                 if self.bot_turn == -1:
                     self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="Q-learning")
                 else:
                     self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="Q-learning")
             elif self.bot_type == "Monte Carlo":
-                self.p2 = Player(_name="policy_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS) + "_SCM", _player_type="Monte Carlo")
+                self.p2 = Player(_name="policy_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_SCM", _player_type="Monte Carlo")
         except:
             print("Error trying to load bot's data")
 

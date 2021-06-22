@@ -25,8 +25,10 @@ class SemEnv(gym.Env):
         self.action_space = spaces.Discrete(BOARD_ROWS * BOARD_COLS)
         self.observation_space = spaces.Box(low=0, high=1, shape=(BOARD_ROWS, BOARD_COLS, MAX_MOVES), dtype=np.uint8)
         #self.observation_space = spaces.Box(low=0, high=1, shape=(64, 64, MAX_MOVES), dtype=np.uint8)
-
-        self.minimax_player = Player(_name="board_nextMoves_3_3_4_mmps", _player_type="Minimax")
+        try:
+            self.minimax_player = Player(_name="board_nextMoves_" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPS", _player_type="Minimax")
+        except:
+            print("Minimax agent not loaded")
         self.rand = Player()
         self.agent_turn = 1
 
@@ -45,7 +47,6 @@ class SemEnv(gym.Env):
         #----------------- Monte Carlo's Step ------------------------------
         if self._type == 'Monte Carlo':
             if action != -1:
-                print("here")
                 if type(action) == int:
                     movePos = (int(action/BOARD_COLS), int(action%BOARD_COLS))
                 else:
@@ -56,7 +57,6 @@ class SemEnv(gym.Env):
                 if win >= 0:
                     reward = -1
                     self.done = True
-                    #print(reward)
                     
                     return self.board.getHash(), reward, self.done, {}
 
@@ -66,7 +66,6 @@ class SemEnv(gym.Env):
             else:
                 if self.minimax_test:
                     botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
-                    #print("here")
                 else:
                     botMove = self.rand.choose_action(self.board, player = self.board.turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
@@ -75,7 +74,6 @@ class SemEnv(gym.Env):
                 if win >= 0:
                     reward = self.board.turn
                     self.done = True
-                    #print(reward)
                     return self.board.getHash(), reward, self.done, {}
 
                 # if self.minimax_test:
@@ -84,11 +82,50 @@ class SemEnv(gym.Env):
             self.board.turn *= -1
             return self.board.getHash(), reward, self.done, {}
 
+        #----------------- Monte Carlo's Step Test ------------------------------
+        if self._type == 'Monte Carlo Test':
+            #---------- Agent Move -----------------------------
+            if action != -1:    # Action specified at step request
+                if type(action) == int:
+                    movePos = (int(action/BOARD_COLS), int(action%BOARD_COLS))
+                else:
+                    movePos = action
+                moveDone = self.board.make_move(movePos)
+            else:   # Action not specified, random action taken
+                botMove = self.rand.choose_action(self.board, player = self.board.turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            win = self.board.check_win()
+            if win != -1:
+                reward = 1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+
+            #--------- Random Bot Move -------------------------
+            if np.random.rand() < self._minimax_rate:
+                positions = self.board.availablePositions()
+                botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+            else:
+                positions = self.board.availablePositions()
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            win = self.board.check_win()
+            if win != -1:
+                reward = -1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+
+            return self.board.getHash(), reward, self.done, {}
+
         #-------------------- Q-learning Step ----------------------------------
         if self._type == "Q-learning":
             #---------- Agent Move -----------------------------
-            move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
-            moveDone = self.board.make_move(move_pos)
+            #move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+            moveDone = self.board.make_move(action)
 
             if moveDone == 0:
                 reward = -2
@@ -104,7 +141,7 @@ class SemEnv(gym.Env):
                 return self.board.getHash(), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
-            if np.random.rand() < 0:
+            if np.random.rand() < 0.5:
                 positions = self.board.availablePositions()
                 botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
@@ -186,7 +223,7 @@ class SemEnv(gym.Env):
                 return self.board.get_one_hot(self.padding), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
-            if np.random.rand() < 0.5:
+            if np.random.rand() < self._minimax_rate:
                 positions = self.board.availablePositions()
                 botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
@@ -212,16 +249,17 @@ class SemEnv(gym.Env):
         self.done = False
 
         if self.agent_turn == -1:
-            if random.rand() < 0.5 and self._type == "DQN" and self.counter < 5000:
+            if random.rand() < 0 and self._type == "DQN" and self.counter < 0:
                 self.get_init_board()
+                self.counter += 1
             else:
                 botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
 
             self.board.turn = -1
 
-        if self.minimax_test:
-            self.board.showBoard()
+        # if self.minimax_test:
+        #     self.board.showBoard()
 
         # if np.random.choice(range(2)) == 1:
         # if self.agent_turn == -1:
@@ -283,7 +321,7 @@ class SemEnv(gym.Env):
 
     def pad (self, state):
         padded_state = np.pad(state, ((0, 0), (31, 30), (30, 30)),mode='constant', constant_values=(0))
-        #print(padded_state)
+        print(padded_state)
         return padded_state.reshape(-1, BOARD_ROWS, BOARD_COLS, MAX_MOVES)
 
     def reshape_cnn(self, state):
@@ -294,7 +332,7 @@ class SemEnv(gym.Env):
         turn = 1
         moves_lst = []
         while not done:
-            if np.random.rand() < 0.1:
+            if np.random.rand() < 0.8:
                 botMove = self.minimax_player.choose_action(self.board, player = turn)
             else:
                 botMove = self.rand.choose_action(self.board, player = turn)
@@ -328,5 +366,4 @@ class SemEnv(gym.Env):
 
             turn *= -1
         #self.board.showBoard()
-        self.counter += 1
         return self.board.get_one_hot(self.padding)

@@ -86,6 +86,15 @@ class Minimax:
 
                 return best
 
+            # if depth == 35:
+            #     self.value_loss.append(best[2])
+            # if len(self.value_loss) == len(board.availablePositions()):
+            #     print(self.value_loss)
+            #     for v in self.value_loss:
+            #         if self.value_loss[0] != v:
+            #             self.check_loss = False
+            #     print(self.check_loss)
+
             if self.force_best_move:
                 #print("best move")
                 if depth == 35:
@@ -96,8 +105,8 @@ class Minimax:
                         if self.value_loss[0] != v:
                             self.check_loss = False
                     #print(self.check_loss)
-                    if self.check_loss == True and self.value_loss[0] == 1:
-                        board.showBoard()
+                    if self.check_loss == True and self.value_loss[0] == -1:
+                        #board.showBoard()
                         idx = np.random.choice(len(board.availablePositions()))
                         action = board.availablePositions()[idx]
                         best[0] = action[0]
@@ -106,37 +115,6 @@ class Minimax:
         #best.append(depth)
         if board_nextMoves.get(board.getHash()) == None:
             board_nextMoves[board.getHash()] = best     # Adicionar ao dicionario o melhor move para este estado do board
-
-        # if self.force_best_move:
-        #     if best[2] < player * 0.9:
-        #         idx = np.random.choice(len(board.availablePositions()))
-        #         action = board.availablePositions()[idx]
-        #         best[0] = action[0]
-        #         best[1] = action[1]
-
-        # if self.force_best_move:
-        #     if best[3] > 34:
-        #         print(str(best[0]) + str(best[1]))
-        #         idx = np.random.choice(len(board.availablePositions()))
-        #         action = board.availablePositions()[idx]
-        #         best[0] = action[0]
-        #         best[1] = action[1]
-        #         print("Rand" + str(best[0]) + str(best[1]))
-
-        # if self.force_best_move:
-        #     print(depth)
-        #     print(len(self.value_loss))
-        #     print(len(board.availablePositions()))
-        #     if depth == 35:
-        #         self.value_loss.append(best[2])
-        #     if len(self.value_loss) == len(board.availablePositions()):
-        #         for v in self.value_loss:
-        #             if self.value_loss[0] != v:
-        #                 break
-        #         idx = np.random.choice(len(board.availablePositions()))
-        #         action = board.availablePositions()[idx]
-        #         best[0] = action[0]
-        #         best[1] = action[1]
 
         if depth == 35:
             self.check_loss = True

@@ -19,7 +19,7 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 layer_size_lst = [64]
-n_train_size_lst = [200000]
+n_train_size_lst = [2000000]
 minimax_rate_lst = [0.8]
 
 

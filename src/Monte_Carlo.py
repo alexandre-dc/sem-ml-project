@@ -9,11 +9,12 @@ class Monte_Carlo:
         self.env = gym.make('sem-v0', _type='Monte Carlo')
         self.env_test = gym.make('sem-v0', _type='Monte Carlo Test')
         self._type = _type
-        self.gamma = 0.95
+        self.gamma = 1
 
-    def monte_carlo_search(self, n_steps, results={}, dict_canonic_states={}):
+    def monte_carlo_search(self, n_steps, results={}, dict_canonic_states={}, nodes_info={}):
         results = results
         dict_canonic_states = dict_canonic_states
+        nodes_info = nodes_info
 
         for i in range(n_steps):
             print("Searching: " + str(int(i/n_steps * 100)) + "%", end='\r' + '\t'*4)
@@ -55,6 +56,19 @@ class Monte_Carlo:
                     if str(st[0]) in dict_canonic_states:
                         key_state = dict_canonic_states[str(st[0])]
                         results[key_state].append(G)
+                    else:
+                        canonic_state, all_symmetry = self.env.get_canonic_state(st[0])
+                        key_state = str(canonic_state)
+                        for sym in all_symmetry:
+                            dict_canonic_states[str(sym)] = key_state
+
+                        results[key_state] = [G]
+                elif self._type == "MCTS-SCM":                   #------------------------- MCTS-SCM Search --------------------    Symmetry and Canonic Memory
+                    if str(st[0]) in dict_canonic_states:
+                        key_state = dict_canonic_states[str(st[0])]
+                        results[key_state].append(G)
+                        node_info = nodes_info[key_state]
+                        node_info 
                     else:
                         canonic_state, all_symmetry = self.env.get_canonic_state(st[0])
                         key_state = str(canonic_state)
@@ -163,7 +177,7 @@ class Monte_Carlo:
 
         if minimax_test:
             print("", end='\r' + '\t'*4)
-            self.env_test._minimax_rate = 0.5
+            self.env_test._minimax_rate = 1
             all_rewards = []
             error = 0
             for i in range(n_test):
@@ -192,48 +206,48 @@ class Monte_Carlo:
         return f_error, f_rewards, len(f_results)
 
     def save_log_to_file (self, f_name, total_time_searching, total_errors, total_rewards, total_size_results, n_search, minimax_data=False):
-        try:
-            f = open(f_name, "a")
-            f.write("\n")
-            f.write(str(n_search) + "\n")
-            line_to_write = ""
-            for s in total_time_searching[n_search]:
+        # try:
+        f = open("/home/alexandre/sem-project-logs/times/" + f_name, "a")
+        f.write("\n")
+        f.write(str(n_search) + "\n")
+        line_to_write = ""
+        for s in total_time_searching[n_search]:
+            line_to_write += str(s) + ", "
+        line_to_write += str(sum(total_time_searching[n_search])/len(total_time_searching[n_search]))
+        f.write(line_to_write + "\n")
+        line_to_write = ""
+
+        if not minimax_data:
+            for s in total_errors[n_search]:
                 line_to_write += str(s) + ", "
-            line_to_write += str(sum(total_time_searching[n_search])/len(total_time_searching[n_search]))
+            line_to_write += str(sum(total_errors[n_search])/len(total_errors[n_search]))
             f.write(line_to_write + "\n")
             line_to_write = ""
-
-            if not minimax_data:
+            for s in total_rewards[n_search]:
+                line_to_write += str(s) + ", "
+            line_to_write += str(sum(total_rewards[n_search])/len(total_rewards[n_search]))
+            f.write(line_to_write + "\n")
+            line_to_write = ""
+        else:
+            for i in range(len(total_errors[n_search])):
                 for s in total_errors[n_search]:
-                    line_to_write += str(s) + ", "
-                line_to_write += str(sum(total_errors[n_search])/len(total_errors[n_search]))
+                    line_to_write += str(s[i]) + ", "
+                line_to_write += str(sum(total_errors[n_search][i])/len(total_errors[n_search][i]))
                 f.write(line_to_write + "\n")
                 line_to_write = ""
                 for s in total_rewards[n_search]:
-                    line_to_write += str(s) + ", "
-                line_to_write += str(sum(total_rewards[n_search])/len(total_rewards[n_search]))
+                    line_to_write += str(s[i]) + ", "
+                line_to_write += str(sum(total_rewards[n_search][i])/len(total_rewards[n_search][i]))
                 f.write(line_to_write + "\n")
                 line_to_write = ""
-            else:
-                for i in range(2):
-                    for s in total_errors[n_search]:
-                        line_to_write += str(s[i]) + ", "
-                    line_to_write += str(sum(total_errors[n_search][i])/len(total_errors[n_search][i]))
-                    f.write(line_to_write + "\n")
-                    line_to_write = ""
-                    for s in total_rewards[n_search]:
-                        line_to_write += str(s[i]) + ", "
-                    line_to_write += str(sum(total_rewards[n_search][i])/len(total_rewards[n_search][i]))
-                    f.write(line_to_write + "\n")
-                    line_to_write = ""
-            for s in total_size_results[n_search]:
-                line_to_write += str(s) + ", "
-            line_to_write += str(sum(total_size_results[n_search])/len(total_size_results[n_search]))
-            f.write(line_to_write + "\n")
-            f.close()
+        for s in total_size_results[n_search]:
+            line_to_write += str(s) + ", "
+        line_to_write += str(sum(total_size_results[n_search])/len(total_size_results[n_search]))
+        f.write(line_to_write + "\n")
+        f.close()
 
-            return 1
-        except:
-            return 0
+        return 1
+        # except:
+        #     return 0
 
 

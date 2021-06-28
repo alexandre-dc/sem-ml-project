@@ -16,14 +16,16 @@ step_n_search = 10000
 n_tests = 5000
 max_n_search = 1 * step_n_search + start_n_search
 attemps = 1
+minimax_test = True
 
 monte_carlo = Monte_Carlo(_type=_type)
 
-n_search_lst = [10000, 20000, 30000, 40000, 50000]
+#n_search_lst = [10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000]
+n_search_lst = [1000000, 2000000, 3000000, 4000000, 5000000]
 
 #n_search_lst1 = [5000]
 
-f_name = "mc_tests_SCM_g95_1_3x4.txt"
+f_name = "mc_tests_SCM_g100_1_3x4.txt"
 
 for i in range(attemps):
     results = {}
@@ -37,7 +39,7 @@ for i in range(attemps):
         f_results, results, dict_canonic_states  = monte_carlo.monte_carlo_search(n_search - n_search_prev, results, dict_canonic_states)     # Searching processe
         t_searching = t1_prev + time.clock() - t0     # Timer end
 
-        error, total_reward, dict_size = monte_carlo.test_MC(int(n_tests), f_results, dict_canonic_states, minimax_test=True)      # Testing processe
+        error, total_reward, dict_size = monte_carlo.test_MC(int(n_tests), f_results, dict_canonic_states, minimax_test=minimax_test)      # Testing processe
 
         if n_search in total_time_searching:
             total_time_searching[n_search].append(t_searching)
@@ -63,7 +65,7 @@ for i in range(attemps):
         t1_prev = t_searching
 
 for n_search in n_search_lst:
-    monte_carlo.save_log_to_file (f_name, total_time_searching, total_errors, total_rewards, total_size_results, n_search, minimax_data=False)
+    monte_carlo.save_log_to_file (f_name, total_time_searching, total_errors, total_rewards, total_size_results, n_search, minimax_data=minimax_test)
 
 fw = open('/home/alexandre/sem-project-logs/monte_carlo/policy_sem1_3x4_' + _type + '_f_results', 'wb')
 pickle.dump(f_results, fw)

@@ -37,6 +37,7 @@ class SemEnv(gym.Env):
         self.padding = False
         self.minimax_test = False
 
+        self.states_lst = []
         self.counter = 0
 
         self.reset()
@@ -95,6 +96,7 @@ class SemEnv(gym.Env):
                 botMove = self.rand.choose_action(self.board, player = self.board.turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
 
+            self.states_lst.append( self.board.state )
             win = self.board.check_win()
             if win != -1:
                 reward = 1
@@ -112,11 +114,18 @@ class SemEnv(gym.Env):
                 botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
 
+            self.states_lst.append( self.board.state )
             win = self.board.check_win()
             if win != -1:
                 reward = -1
                 self.done = True
                 
+                # final_state = self.board.state
+                # for s in self.states_lst:
+                #     self.board.state = s
+                #     self.board.showBoard()
+                # self.board.state = final_state
+
                 return self.board.getHash(), reward, self.done, {}
 
             return self.board.getHash(), reward, self.done, {}
@@ -247,6 +256,7 @@ class SemEnv(gym.Env):
     def reset(self):
         self.board.reset()
         self.done = False
+        self.states_lst = []
 
         if self.agent_turn == -1:
             if random.rand() < 0 and self._type == "DQN" and self.counter < 0:

@@ -19,7 +19,7 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 layer_size_lst = [64]
-n_train_size_lst = [2000000]
+n_train_size_lst = [1000000]
 minimax_rate_lst = [0.8]
 
 
@@ -125,15 +125,15 @@ for minimax_rate in minimax_rate_lst:
             sum = 0
             for i in range(1):
                 if l_size == 8:
-                    model = DQN(CustomDQNPolicy_8, env, verbose=1, exploration_fraction=0.2)
+                    model = DQN(CustomDQNPolicy_8, env, verbose=1, exploration_fraction=0.2, exploration_initial_eps=0.1)
                 elif l_size == 16:
                     model = DQN(CustomDQNPolicy_16, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 32:
                     model = DQN(CustomDQNPolicy_32, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 64:
-                    model = DQN(CustomDQNPolicy_64, env, verbose=1, exploration_fraction=0.2)
+                    #model = DQN(CustomDQNPolicy_64, env, verbose=1, exploration_fraction=0.2, exploration_initial_eps=0.1)
                     #model = DQN(CustomDQNPolicy_Cnn, env, verbose=1, exploration_fraction=0.2)
-                    #model = DQN.load("/home/alexandre/sem-project-logs/dqn/" + save_file, env)
+                    model = DQN.load("/home/alexandre/sem-project-logs/dqn/" + save_file + "_4M", env, verbose=1, exploration_fraction=0.05, exploration_initial_eps=0.1)
                 elif l_size == 128:
                     model = DQN(CustomDQNPolicy_128, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 256:
@@ -149,7 +149,7 @@ for minimax_rate in minimax_rate_lst:
                     env_test.agent_turn = -1
                     mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=test_steps)
                     all_rewards.append(mean_reward)
-                model.save("/home/alexandre/sem-project-logs/dqn/" + save_file)
+                model.save("/home/alexandre/sem-project-logs/dqn/" + save_file + "_5M")
                 print(minimax_rate)
                 print(l_size)
                 print(n_train)

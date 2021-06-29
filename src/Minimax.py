@@ -54,12 +54,21 @@ class Minimax:
             score = [-1,-1,0]
             x, y = pos[0], pos[1]
             board.make_move((x, y))
-            for b_flat in board.get_symmetry():
-                b_hash = board.get_array_from_flat(b_flat)
-                b_hash = str(b_hash.reshape(BOARD_ROWS * BOARD_COLS))
-                if board_nextMoves.get(b_hash) != None:
-                    score = board_nextMoves.get(b_hash)
-                    break
+
+            canonic_state, all_symmetry = board.get_canonic_state(board.getHash())
+            key_state = str(canonic_state)
+            if key_state in board_nextMoves:
+                score = board_nextMoves.get(str(key_state))
+                #break
+
+            # for sym in board.get_symmetry():
+            #     # b_hash = board.get_array_from_flat(b_flat)
+            #     # b_hash = str(b_hash.reshape(BOARD_ROWS * BOARD_COLS))
+                
+
+            #     if board_nextMoves.get(str(sym)) != None:
+            #         score = board_nextMoves.get(str(sym))
+            #         break
             else:
                 score = self.minimax_main_pruning_sym(board, depth - 1, alpha, beta, -player, board_nextMoves)
                 # if self.force_best_move:

@@ -1,6 +1,10 @@
 import numpy as np
 import operator
 import pickle
+import matplotlib.pyplot as plt
+from PIL import Image, ImageTk
+
+import sem_game
 
 
 class Agent:
@@ -42,6 +46,7 @@ class Agent:
     def predict(self, positions, current_board):
         all_positions = current_board.all_positions
 
+        #self.print_heatmap(current_board)
 
         board_hash = current_board.getHash()
         state_moves_values = (None if self.states_value.get(board_hash) is None else self.states_value.get(current_board.getHash()))
@@ -56,7 +61,7 @@ class Agent:
         possible_state_values = []
         
         for p in positions:
-            next_board = current_board.copy()
+            #next_board = current_board.copy()
             current_board.make_move(p)
             next_boardHash = current_board.getHash()
             possible_state_values.append(0 if self.states_value.get(next_boardHash) is None else self.states_value.get(next_boardHash))
@@ -64,19 +69,23 @@ class Agent:
 
         return possible_state_values
 
-    def print_heatmap(self, state):
-        state.showBoard()
-        q_heatmap = self.q_values(state.all_positions, state.board)
-        print(q_heatmap)
-        a = np.zeros((BOARD_ROWS, BOARD_COLS))
+    def print_heatmap(self, board):
+        #board.showBoard()
+        #q_heatmap = self.q_values(board.all_positions, board)
+        q_heatmap = self.states_value.get(board.getHash())
+        to_plot = np.zeros((sem_game.BOARD_ROWS, sem_game.BOARD_COLS))
         for i in range(len(q_heatmap)):
+            print(i)
             if q_heatmap[i] == 0:
                 continue
-            a[int(i/BOARD_COLS), i%BOARD_COLS] = q_heatmap[i][2]
+            to_plot[int(i/sem_game.BOARD_COLS), i%sem_game.BOARD_COLS] = q_heatmap[i]
         
-        plt.imshow(a, cmap='gist_heat', interpolation='nearest')
-        plt.clim(-1, 1)
-        plt.show()
+        # plt.imshow(to_plot, cmap='gist_heat', interpolation='nearest', extent=[-0.5, 3.5, 2.5, -0.5])
+        # #plt.clim(vmin=-1, vmax=1)
+        # plt.colorbar()
+        # plt.show()
+        image = Image.fromarray(to_plot)
+        return ImageTk.PhotoImage(image)
 
     def perfectMove(self, state):
         best_move = self.states_value.get(state.getHash())

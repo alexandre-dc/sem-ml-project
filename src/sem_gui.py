@@ -45,7 +45,7 @@ class VisualGame(tk.Frame):
 
         self.alg_choice = tk.StringVar(root)
         self.alg_choices = { 'Minimax','Monte Carlo','Q-learning','DQN'}
-        self.alg_choice.set('Monte Carlo') # set the default option
+        self.alg_choice.set('Q-learning') # set the default option
 
         popupMenu = tk.OptionMenu(self.optionsFrame, self.alg_choice, *self.alg_choices)
         # tk.Label(root, text="Choose a dish")
@@ -59,7 +59,6 @@ class VisualGame(tk.Frame):
         # tk.Label(root, text="Choose a dish")
         popupMenu1.pack(side="left", padx=15, pady=0)
 
-        
 
         #self.txt_frame = tk.Frame(root, )
         self.winner_txt = tk.Label(self.canvas, height=1, width=50, bg="grey")
@@ -69,7 +68,7 @@ class VisualGame(tk.Frame):
 
         self.board = Board()
         self.bot_turn = -1
-        self.bot_type = "Monte Carlo"
+        self.bot_type = "Q-learning"
 
         # if self.bot_type == "DQN":
         #     self.p2 = Player(_name="200k_mm_sem1_3x4_32", _player_type="DQN")
@@ -95,7 +94,6 @@ class VisualGame(tk.Frame):
                 print(self.check_win(return_line=True))
                 if self.board.check_win() == -1:
                     self.root.after(np.random.randint(500, 1000), self.bot_move)
-                    #self.bot_move()
 
         
     def bot_move(self):
@@ -111,6 +109,7 @@ class VisualGame(tk.Frame):
         if moveMade == 1:
             self.update_visual()
             print(self.check_win(return_line=True))
+            
 
     def update_visual(self):
         for i in range(BOARD_ROWS):
@@ -124,6 +123,7 @@ class VisualGame(tk.Frame):
                 elif self.board.state[i, j] == 3:
                     self.canvas.create_oval(10 + 100*j, 10 + 100*i, 90 + 100*j, 90 + 100*i,
                         fill="red", width=3, tags="move")
+        
     
     def update_bot_type(self):
         try:
@@ -131,14 +131,14 @@ class VisualGame(tk.Frame):
                 if self.bot_turn == -1:
                     self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="DQN")
                 else:
-                    self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="DQN")
+                    self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="DQN")
             elif self.bot_type == "Minimax":
-                self.p2 = Player(_name="board_nextMoves_"  + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPS", _player_type="Minimax")
+                self.p2 = Player(_name="board_nextMoves_"  + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPSC", _player_type="Minimax")
             elif self.bot_type == "Q-learning":
                 if self.bot_turn == -1:
-                    self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="Q-learning")
+                    self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="Q-learning")
                 else:
-                    self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "_" + str(BOARD_COLS), _player_type="Q-learning")
+                    self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="Q-learning")
             elif self.bot_type == "Monte Carlo":
                 self.p2 = Player(_name="policy_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_SCM", _player_type="Monte Carlo")
         except:
@@ -212,6 +212,6 @@ class VisualGame(tk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Semáforo")
-    root.geometry("410x420")
+    root.geometry("810x420")
     VisualGame(root).pack(fill="both", expand=True)
     root.mainloop()

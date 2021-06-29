@@ -19,9 +19,9 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 layer_size_lst = [64]
-n_train_size_lst = [1000000]
+n_train_size_lst = [10000]
 minimax_rate_lst = [0.8]
-
+test_steps = 10
 
 
 layer_size = 8
@@ -115,7 +115,7 @@ class CustomDQNPolicy_Cnn(FeedForwardPolicy):
 save_file = "policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS)
 #env_test.agent_turn = -1
 
-test_steps = 1000
+
 
 for minimax_rate in minimax_rate_lst:
     env = gym.make('sem-v0', _type='DQN', _minimax_rate=minimax_rate)

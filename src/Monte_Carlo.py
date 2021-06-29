@@ -63,19 +63,6 @@ class Monte_Carlo:
                             dict_canonic_states[str(sym)] = key_state
 
                         results[key_state] = [G]
-                elif self._type == "MCTS-SCM":                   #------------------------- MCTS-SCM Search --------------------    Symmetry and Canonic Memory
-                    if str(st[0]) in dict_canonic_states:
-                        key_state = dict_canonic_states[str(st[0])]
-                        results[key_state].append(G)
-                        node_info = nodes_info[key_state]
-                        node_info 
-                    else:
-                        canonic_state, all_symmetry = self.env.get_canonic_state(st[0])
-                        key_state = str(canonic_state)
-                        for sym in all_symmetry:
-                            dict_canonic_states[str(sym)] = key_state
-
-                        results[key_state] = [G]
                 elif self._type == "SC":                    #------------------------- SC Search ---------------------    Symmetry and Canonic
                     canonic_state, all_symmetry = self.env.get_canonic_state(st[0])
                     key_state = str(canonic_state)

@@ -13,7 +13,7 @@ from Agent import Agent
 
 BOARD_ROWS = 3
 BOARD_COLS = 4
-MAX_MOVES = 3
+MAX_MOVES = 2
 
 class Board:                                
     def __init__(self):                     # Inicialização do board

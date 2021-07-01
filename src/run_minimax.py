@@ -7,7 +7,7 @@ import time
 
 board = Board()
 #list_alg = ["MM", "MMP", "MMPS"]
-list_alg = ["MMPS"]
+list_alg = ["MMPSC"]
 logs = {}
 #minimax = Minimax("MMPS", 35, -100, 100, board_nextMoves, force_best_move=True)      #           MMPS            /        MMP        /    MM     /        MSP           /      MS
                                                                                       # Main_Prunning_Symmetric   /   Main_Prunning   /   Main    /   Simple_Prunning    /    Simple

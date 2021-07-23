@@ -19,9 +19,9 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 layer_size_lst = [64]
-n_train_size_lst = [10000]
+n_train_size_lst = [100000]
 minimax_rate_lst = [0.8]
-test_steps = 10
+test_steps = 2000
 
 
 layer_size = 8
@@ -60,8 +60,8 @@ class CustomDQNPolicy_128(FeedForwardPolicy):
 
 class CustomDQNPolicy_256(FeedForwardPolicy):
     def __init__(self,*args, **kwargs):
-        super(CustomDQNPolicy_128, self).__init__(*args, **kwargs,
-                                           layers=[128, 128],
+        super(CustomDQNPolicy_256, self).__init__(*args, **kwargs,
+                                           layers=[256, 256],
                                            layer_norm=False,
                                            feature_extraction="mlp")
                                         
@@ -131,9 +131,9 @@ for minimax_rate in minimax_rate_lst:
                 elif l_size == 32:
                     model = DQN(CustomDQNPolicy_32, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 64:
-                    #model = DQN(CustomDQNPolicy_64, env, verbose=1, exploration_fraction=0.2, exploration_initial_eps=0.1)
+                    model = DQN(CustomDQNPolicy_64, env, verbose=1, exploration_fraction=0.2)
                     #model = DQN(CustomDQNPolicy_Cnn, env, verbose=1, exploration_fraction=0.2)
-                    model = DQN.load("/home/alexandre/sem-project-logs/dqn/" + save_file + "_4M", env, verbose=1, exploration_fraction=0.05, exploration_initial_eps=0.1)
+                    # model = DQN.load("/home/alexandre/sem-project-logs/dqn/" + save_file + "_4M", env, verbose=1, exploration_fraction=0.05, exploration_initial_eps=0.1)
                 elif l_size == 128:
                     model = DQN(CustomDQNPolicy_128, env, verbose=1, exploration_fraction=0.2)
                 elif l_size == 256:
@@ -141,10 +141,11 @@ for minimax_rate in minimax_rate_lst:
                 else:
                     model = DQN(CustomDQNPolicy_256, env, verbose=1, exploration_fraction=0.2)
                 t0 = time.clock()
+                print(n_train)
                 model.learn(total_timesteps=n_train)
                 time_learning = time.clock() - t0
                 all_rewards = []
-                for i in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
+                for i in [0, 0.2, 0.4, 0.6, 0.8, 1]:
                     env_test = gym.make('sem-v0', _type='DQN_test', _minimax_rate=i)
                     env_test.agent_turn = -1
                     mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=test_steps)

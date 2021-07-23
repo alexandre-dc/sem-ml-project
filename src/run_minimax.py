@@ -15,7 +15,8 @@ for _ in range(1):
     for alg in list_alg:
         for i in range(1, 4):
             board_nextMoves = {}
-            minimax = Minimax(alg, 35, -100, 100, board_nextMoves, force_best_move=False)
+            dcs = {}
+            minimax = Minimax(alg, 35, -100, 100, board_nextMoves, dcs, force_best_move=False)
             done = False  
             board.reset()
             sem_game.MAX_MOVES = i

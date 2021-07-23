@@ -10,7 +10,7 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 class Minimax:
-    def __init__(self, _minimax_type, depth, alpha, beta, board_nextMoves, force_best_move = False):
+    def __init__(self, _minimax_type, depth, alpha, beta, board_nextMoves, dcs, force_best_move = False):
             self._minimax_type = _minimax_type
             #self.board = board
             self.depth = depth
@@ -18,8 +18,134 @@ class Minimax:
             self.beta = beta
             self.board_nextMoves = board_nextMoves
             self.force_best_move = force_best_move
+            self.dcs = dcs
             self.check_loss = True
             self.value_loss = []
+
+    def minimax_main_pruning_sym_canonic_mem(self, board, depth, alpha, beta, player, board_nextMoves, dcs):       # Minimax with memory, 1 level breath searsh, alpha-beta pruning and symmetries
+        if player == 1:
+            best = [-1, -1, -10]
+            value = -100
+        else:
+            best = [-1, -1, +10]
+            value = 100
+
+        # if board.check_win() != -1:
+        #     return [-1, -1, -player]
+
+        if depth == 0:
+            return [-1, -1, 0]
+
+        # if depth == 30:
+        #     print("here")
+        #     print("- ", end="")
+        
+
+        for pos in board.availablePositions():      # Verificar se algum dos proximos moves dá vitoria imediata
+            x, y = pos[0], pos[1]
+            board.make_move((x, y))
+            if board.check_win() != -1:
+                #print(depth)
+                if depth == 35:
+                    board.undo_move((x, y))
+                    board_nextMoves[board.getHash()] = [x, y, player]
+                    return [x, y, player]
+                else:
+                    board.undo_move((x, y))
+                    board_nextMoves[board.getHash()] = [-1, -1, player]
+                    return [-1, -1, player]
+            board.undo_move((x, y))
+
+        this_board_canonic_state, all_this_sym = board.get_canonic_state(board.getHash())
+        #print(this_board_canonic_state)
+        this_board_canonic_state = str(this_board_canonic_state)
+        for pos in board.availablePositions():
+            score = [-1,-1,0]
+            x, y = pos[0], pos[1]
+            board.make_move((x, y))
+            print(dcs)
+            print(board_nextMoves)
+            if str(board.getHash()) in dcs:
+                print(board.getHash())
+                key_state = dcs[board.getHash()]
+                score = board_nextMoves.get(key_state)
+            else:
+                canonic_state, all_symmetry = board.get_canonic_state(board.getHash())
+                key_state = str(canonic_state)
+                for sym in all_symmetry:
+                    dcs[str(sym)] = key_state
+
+            # canonic_state, all_symmetry = board.get_canonic_state(board.getHash())
+            # key_state = str(canonic_state)
+            # if key_state in board_nextMoves:
+            #     score = board_nextMoves.get(str(key_state))
+
+            # else:
+                score = self.minimax_main_pruning_sym_canonic_mem(board, depth - 1, alpha, beta, -player, board_nextMoves, dcs)
+                # if self.force_best_move:
+                #     score[2] *= 0.9
+            board.undo_move((x, y))
+            print(depth)
+            score[0], score[1] = x, y
+
+            if player == 1:
+                if score[2] > best[2]:
+                    best = score  # max value
+                # alpha = max(value, best[2])
+                # if alpha >= beta:
+                #     break
+            else:
+                if score[2] < best[2]:
+                    best = score  # min value
+                # beta = min(value, best[2])
+                # if alpha >= beta:
+                #     break
+
+            if score[2] == player:           # Verificar se esta arvore já têm uma jogada optima
+                board_nextMoves[this_board_canonic_state] = best
+                #best.append(depth)
+
+                return best
+
+            # if depth == 35:
+            #     self.value_loss.append(best[2])
+            # if len(self.value_loss) == len(board.availablePositions()):
+            #     print(self.value_loss)
+            #     for v in self.value_loss:
+            #         if self.value_loss[0] != v:
+            #             self.check_loss = False
+            #     print(self.check_loss)
+
+            if self.force_best_move:
+                #print("best move")
+                if depth == 35:
+                    self.value_loss.append(best[2])
+                if len(self.value_loss) == len(board.availablePositions()):
+                    #print(self.value_loss)
+                    for v in self.value_loss:
+                        if self.value_loss[0] != v:
+                            self.check_loss = False
+                    #print(self.check_loss)
+                    if self.check_loss == True and self.value_loss[0] == -1:
+                        #board.showBoard()
+                        idx = np.random.choice(len(board.availablePositions()))
+                        action = board.availablePositions()[idx]
+                        best[0] = action[0]
+                        best[1] = action[1]
+
+        #best.append(depth)
+        if board_nextMoves.get(this_board_canonic_state) == None:
+            board_nextMoves[this_board_canonic_state] = best
+
+        # if board_nextMoves.get(board.getHash()) == None:
+        #     board_nextMoves[board.getHash()] = best     # Adicionar ao dicionario o melhor move para este estado do board
+
+        if depth == 35:
+            self.check_loss = True
+            self.value_loss = []
+
+        #print(best)
+        return best
 
     def minimax_main_pruning_sym_canonic(self, board, depth, alpha, beta, player, board_nextMoves):       # Minimax with memory, 1 level breath searsh, alpha-beta pruning and symmetries
         if player == 1:
@@ -56,6 +182,7 @@ class Minimax:
         this_board_canonic_state, all_this_sym = board.get_canonic_state(board.getHash())
         #print(this_board_canonic_state)
         this_board_canonic_state = str(this_board_canonic_state)
+        
         for pos in board.availablePositions():
             score = [-1,-1,0]
             x, y = pos[0], pos[1]
@@ -65,15 +192,6 @@ class Minimax:
             key_state = str(canonic_state)
             if key_state in board_nextMoves:
                 score = board_nextMoves.get(str(key_state))
-
-            # for sym in board.get_symmetry():
-            #     # b_hash = board.get_array_from_flat(b_flat)
-            #     # b_hash = str(b_hash.reshape(BOARD_ROWS * BOARD_COLS))
-                
-
-            #     if board_nextMoves.get(str(sym)) != None:
-            #         score = board_nextMoves.get(str(sym))
-                    # break
             else:
                 score = self.minimax_main_pruning_sym_canonic(board, depth - 1, alpha, beta, -player, board_nextMoves)
                 # if self.force_best_move:
@@ -451,7 +569,9 @@ class Minimax:
         return best
 
     def run_search (self, board, player):
-        if self._minimax_type == "MMPSC":
+        if self._minimax_type == "MMPSCM":
+            return self.minimax_main_pruning_sym_canonic_mem(board, self.depth, self.alpha, self.beta, player, self.board_nextMoves, self.dcs)
+        elif self._minimax_type == "MMPSC":
             return self.minimax_main_pruning_sym_canonic(board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)
         elif self._minimax_type == "MMPS":
             return self.minimax_main_pruning_sym(board, self.depth, self.alpha, self.beta, player, self.board_nextMoves)

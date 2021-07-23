@@ -11,12 +11,12 @@ BOARD_COLS = sem_game.BOARD_COLS
 MAX_MOVES = sem_game.MAX_MOVES
 
 class Q_Learning:
-    def __init__(self, agent, adv):
+    def __init__(self, agent, adv, minimax_rate):
         self.p1 = adv
         self.p2 = agent
         self.board = Board()
         self.game = Game(self.p1, self.p2)
-        self.env = gym.make('sem-v0', _type='Q-learning')
+        self.env = gym.make('sem-v0', _type='Q-learning', _minimax_rate=minimax_rate)
         self.env.agent_turn = -1
 
     def feed_reward (self, reward):
@@ -130,20 +130,38 @@ class Q_Learning:
         self.p2.set_test_mode(True)
         test_rewards = []
         print("Testing... ")
-        for i in range(steps):
-            s = self.env.reset()
-            done = False
-            while not done:
-                self.p2.states.append(self.env.board.getHash())
-                action = self.p2.choose_action(self.env.board)
-                s, r, done, info = self.env.step(action)
-                self.p2.moves.append(action)
+        # for i in range(steps):
+        #     s = self.env.reset()
+        #     done = False
+        #     while not done:
+        #         self.p2.states.append(self.env.board.getHash())
+        #         action = self.p2.choose_action(self.env.board)
+        #         s, r, done, info = self.env.step(action)
+        #         self.p2.moves.append(action)
 
-            test_rewards.append(r)
-            self.p2.reset()
-            self.game.reset()
-        print(sum(test_rewards)/steps)
-        self.p2.set_test_mode(False)
+        #     test_rewards.append(r)
+        #     self.p2.reset()
+        #     self.game.reset()
+        # print(sum(test_rewards)/steps)
+        # self.p2.set_test_mode(False)
+
+        all_rewards = []
+        for i in [0, 0.2, 0.4, 0.6, 0.8, 1]:
+            print("minimax_test_rate: " + str(i))
+            rewards = 0
+            env_test = gym.make('sem-v0', _type='Q-learning_test', _minimax_rate=i)
+            env_test.agent_turn = -1
+            for game in range(steps):
+                s = env_test.reset()
+                done = False
+                while not done:
+                    self.p2.states.append(env_test.board.getHash())
+                    action = self.p2.choose_action(env_test.board)
+                    s, r, done, info = env_test.step(action)
+                    self.p2.moves.append(action)
+                rewards += r
+            all_rewards.append(rewards/steps)
+        return all_rewards
 
     def play_game(self):
         state = self.env.reset()

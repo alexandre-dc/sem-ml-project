@@ -23,10 +23,10 @@ class SemEnv(gym.Env):
         self._minimax_rate = _minimax_rate
 
         self.action_space = spaces.Discrete(BOARD_ROWS * BOARD_COLS)
-        self.observation_space = spaces.Box(low=0, high=1, shape=(BOARD_ROWS, BOARD_COLS, MAX_MOVES), dtype=np.uint8)
+        self.observation_space = spaces.Box(low=0, high=MAX_MOVES, shape=(BOARD_ROWS, BOARD_COLS, 1), dtype=np.uint8)
         #self.observation_space = spaces.Box(low=0, high=1, shape=(64, 64, MAX_MOVES), dtype=np.uint8)
         try:
-            self.minimax_player = Player(_name="board_nextMoves_" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPS", _player_type="Minimax")
+            self.minimax_player = Player(_name="board_nextMoves_" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPSC", _player_type="Minimax")
         except:
             print("Minimax agent not loaded")
         self.rand = Player()
@@ -150,7 +150,45 @@ class SemEnv(gym.Env):
                 return self.board.getHash(), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
-            if np.random.rand() < 0.5:
+            if np.random.rand() < self._minimax_rate:
+                positions = self.board.availablePositions()
+                botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+            else:
+                positions = self.board.availablePositions()
+                botMove = self.rand.choose_action(self.board, player = -self.agent_turn)
+                moveDone = self.board.make_move((botMove[0], botMove[1]))
+
+            win = self.board.check_win()
+            if win != -1:
+                reward = -1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+
+            return self.board.getHash(), reward, self.done, {}
+
+        #-------------------- Q-learning Tests Step ----------------------------------
+        if self._type == "Q-learning_test":
+            #---------- Agent Move -----------------------------
+            #move_pos = (int(action / BOARD_COLS), int(action % BOARD_COLS))
+            moveDone = self.board.make_move(action)
+
+            if moveDone == 0:
+                reward = -1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+            
+            win = self.board.check_win()
+            if win != -1:
+                reward = 1
+                self.done = True
+                
+                return self.board.getHash(), reward, self.done, {}
+
+            #--------- Random Bot Move -------------------------
+            if np.random.rand() < self._minimax_rate:
                 positions = self.board.availablePositions()
                 botMove = self.minimax_player.choose_action(self.board, player = -self.agent_turn)
                 moveDone = self.board.make_move((botMove[0], botMove[1]))
@@ -177,15 +215,15 @@ class SemEnv(gym.Env):
             if moveDone == 0:
                 reward = -2
                 self.done = True
-                
-                return self.board.get_one_hot(self.padding), reward, self.done, {}
+                return self.board.state, reward, self.done, {}
+                # return self.board.get_one_hot(self.padding), reward, self.done, {}
             
             win = self.board.check_win()
             if win != -1:
                 reward = 1
                 self.done = True
-                
-                return self.board.get_one_hot(self.padding), reward, self.done, {}
+                return self.board.state, reward, self.done, {}
+                # return self.board.get_one_hot(self.padding), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
             if np.random.rand() < self._minimax_rate:
@@ -204,12 +242,12 @@ class SemEnv(gym.Env):
             if win != -1:
                 reward = -1
                 self.done = True
-                
-                return self.board.get_one_hot(self.padding), reward, self.done, {}
+                return self.board.state, reward, self.done, {}
+                # return self.board.get_one_hot(self.padding), reward, self.done, {}
 
-            # return self.board.state, reward, self.done, {}
+            return self.board.state, reward, self.done, {}
             # return self.one_hot_encode(self.board.state), reward, self.done, {}
-            return self.board.get_one_hot(self.padding), reward, self.done, {}
+            # return self.board.get_one_hot(self.padding), reward, self.done, {}
             #return canonic_state, reward, self.done, {}
 
         #-------------------- DQN SB's Step Test -----------------------------------
@@ -221,15 +259,15 @@ class SemEnv(gym.Env):
             if moveDone == 0:
                 reward = -2
                 self.done = True
-                
-                return self.board.get_one_hot(self.padding), reward, self.done, {}
+                return self.board.state, reward, self.done, {}
+                # return self.board.get_one_hot(self.padding), reward, self.done, {}
             
             win = self.board.check_win()
             if win != -1:
                 reward = 1
                 self.done = True
-                
-                return self.board.get_one_hot(self.padding), reward, self.done, {}
+                return self.board.state, reward, self.done, {}
+                # return self.board.get_one_hot(self.padding), reward, self.done, {}
 
             #--------- Random Bot Move -------------------------
             if np.random.rand() < self._minimax_rate:
@@ -245,12 +283,12 @@ class SemEnv(gym.Env):
             if win != -1:
                 reward = -1
                 self.done = True
-                
-                return self.board.get_one_hot(self.padding), reward, self.done, {}
+                return self.board.state, reward, self.done, {}
+                # return self.board.get_one_hot(self.padding), reward, self.done, {}
 
-            # return self.board.state, reward, self.done, {}
+            return self.board.state, reward, self.done, {}
             # return self.one_hot_encode(self.board.state), reward, self.done, {}
-            return self.board.get_one_hot(self.padding), reward, self.done, {}
+            # return self.board.get_one_hot(self.padding), reward, self.done, {}
             #return canonic_state, reward, self.done, {}
 
     def reset(self):
@@ -280,7 +318,8 @@ class SemEnv(gym.Env):
         # hash_state = self.board.getHash()
         # canonic_state = self.get_canonic_state(hash_state)
         # canonic_state = self.board.get_array_from_flat(canonic_state[0])
-        return self.board.get_one_hot(self.padding)
+        # return self.board.get_one_hot(self.padding)
+        return self.board.getHash()
 
     def render(self):
         self.board.showBoard()

@@ -24,7 +24,7 @@ class Player:
         elif self._player_type == "Minimax":
             fr = open("/home/alexandre/sem-project-logs/minimax/" + self._name, 'rb')
             self.model = pickle.load(fr)
-            self.minimax = Minimax("MMPS", 35, -100, 100, self.model, force_best_move=True)
+            self.minimax = Minimax("MMPSC", 35, -100, 100, self.model, {}, force_best_move=True)
             fr.close()
         elif self._player_type == "Q-learning":
             self.agent = Agent()

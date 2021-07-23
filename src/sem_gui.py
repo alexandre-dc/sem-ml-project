@@ -133,7 +133,7 @@ class VisualGame(tk.Frame):
                 else:
                     self.p2 = Player(_name="policy1_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="DQN")
             elif self.bot_type == "Minimax":
-                self.p2 = Player(_name="board_nextMoves_"  + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPSC", _player_type="Minimax")
+                self.p2 = Player(_name="board_nextMoves_"  + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS) + "_MMPS", _player_type="Minimax")
             elif self.bot_type == "Q-learning":
                 if self.bot_turn == -1:
                     self.p2 = Player(_name="policy2_sem" + str(MAX_MOVES) + "_" + str(BOARD_ROWS) + "x" + str(BOARD_COLS), _player_type="Q-learning")
